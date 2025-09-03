@@ -1,10 +1,23 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ['./App.{js,ts,tsx}', './components/**/*.{js,ts,tsx}'],
+const { platformSelect, platformColor } = require("nativewind/theme");
 
-  presets: [require('nativewind/preset')],
+module.exports = {
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  presets: [require("nativewind/preset")],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        error: platformSelect({
+          // Now you can provide platform specific values
+          ios: platformColor("systemRed"),
+          android: platformColor("?android:colorError"),
+          default: "red",
+        }),
+      },
+    },
+  },
+  future: {
+    hoverOnlyWhenSupported: true,
   },
   plugins: [],
 };
