@@ -16,11 +16,7 @@ function Content() {
       <View className="py-12 md:py-24 lg:py-32 xl:py-48">
         <View className="px-4 md:px-6">
           <View className="flex flex-col items-center gap-4 text-center">
-            <Text className="text-3xl font-semibold">Settings</Text>
-            <Link href="/">
-              <Text className="text-3xl font-semibold text-blue-400">Home</Text>
-            </Link>
-            <View className="gap-4"></View>
+            <Text>Settings</Text>
           </View>
         </View>
       </View>
