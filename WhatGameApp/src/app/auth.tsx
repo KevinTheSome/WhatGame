@@ -11,8 +11,14 @@ export default function Page() {
   const [name, setName] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>("");
-  const theme = useTheme();
   const router = useRouter();
+  const theme = useTheme();
+
+  async function handleResponse(response: object) {
+    console.log(response);
+    save("token", response.token);
+    save("user", response.user);
+  }
 
   async function signUp(name: string, email: string, password: string) {
     try {
@@ -54,13 +60,6 @@ export default function Page() {
       return "Failed to sign in";
     }
   }
-
-  async function handleResponse(response: object) {
-    console.log(response);
-    save("token", response.token);
-    save("user", response.user);
-  }
-
   const handleAuth = async () => {
     if (!email || !password) {
       setError("Please fill in all fields.");
@@ -100,7 +99,9 @@ export default function Page() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <View style={styles.content}>
+      <View
+        style={[styles.content, { backgroundColor: theme.colors.background }]}
+      >
         <Text style={styles.title} variant="headlineMedium">
           {" "}
           {isSignUp ? "Create Account" : "Welcome Back"}
@@ -158,7 +159,6 @@ export default function Page() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   content: {
     flex: 1,
@@ -168,7 +168,6 @@ const styles = StyleSheet.create({
   title: {
     textAlign: "center",
     marginBottom: 24,
-    color: "black",
   },
   input: {
     marginBottom: 16,

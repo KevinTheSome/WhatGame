@@ -1,8 +1,14 @@
-import { View, Text, StyleSheet } from "react-native";
-
+import { View, StyleSheet } from "react-native";
+import { Text, useTheme } from "react-native-paper";
 export default function Tab() {
+  const theme = useTheme();
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.primaryContainer },
+      ]}
+    >
       <Text>Tab [Home|Settings]</Text>
     </View>
   );
