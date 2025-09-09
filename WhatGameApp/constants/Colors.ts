@@ -1,7 +1,7 @@
 export const Colors = {
   light: {
     primary: "rgb(0, 104, 116)",
-    onPrimary: "rgb(255, 255, 255)",
+    onPrimary: "rgb(230, 240, 240)",
     primaryContainer: "rgb(152, 240, 255)",
     onPrimaryContainer: "rgb(0, 31, 36)",
     secondary: "rgb(74, 98, 103)",

@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('friends', function (Blueprint $table) {
             $table->id();
             $table->integer('accepted')->default(0);
-            $table->unsignedBigInteger('sender')->constrained('users')->onDelete('cascade');
-            $table->unsignedBigInteger('getter')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('sender_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('receiver_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
