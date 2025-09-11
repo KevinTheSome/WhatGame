@@ -1,9 +1,19 @@
-import { View, Text, StyleSheet } from "react-native";
-
+import { View, StyleSheet } from "react-native";
+import { useState } from "react";
+import { Text, Searchbar, useTheme } from "react-native-paper";
 export default function Tab() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const theme = useTheme();
   return (
-    <View style={styles.container}>
-      <Text>Tab [Home|Settings]</Text>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <Searchbar
+        placeholder="Search lobbies"
+        onChangeText={setSearchQuery}
+        value={searchQuery}
+      />
     </View>
   );
 }
@@ -11,7 +21,6 @@ export default function Tab() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 16,
   },
 });

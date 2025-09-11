@@ -1,8 +1,17 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import {
+  Text,
+  Searchbar,
+  SegmentedButtons,
+  useTheme,
+} from "react-native-paper";
 
 export default function Tab() {
+  const theme = useTheme();
   return (
-    <View style={styles.container}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <Text>Tab Home</Text>
     </View>
   );

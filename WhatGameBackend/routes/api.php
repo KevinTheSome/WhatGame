@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GamesController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FriendController;
+use App\Http\Controllers\LobbyController;
 
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -23,12 +25,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/search', [GamesController::class, 'searchGame'])->name('search');
     Route::post('/addToFavourites', [GamesController::class, 'addToFavourites'])->name('addToFavourites');
     Route::post('/getUserFavourites', [GamesController::class, 'getUserFavourites'])->name('getUserFavourites');
-    Route::post('/delUserFavourit', [GamesController::class, 'delUserFavourit'])->name('delUserFavourit');
 
     // friends
-    Route::post('/addFriend', [GamesController::class, 'addFriend'])->name('addFriend');
-    Route::post('/getFriends', [GamesController::class, 'getFriends'])->name('getFriends');
-    Route::post('/delFriend', [GamesController::class, 'delFriend'])->name('delFriend');
+    Route::post('/addFriend', [FriendController::class, 'addFriend'])->name('addFriend');
+    Route::get('/getFriends', [FriendController::class, 'getFriends'])->name('getFriends');
+    Route::post('/delFriend', [FriendController::class, 'delFriend'])->name('delFriend');
     
     // lobby system
     Route::prefix('lobby')->group(function () {

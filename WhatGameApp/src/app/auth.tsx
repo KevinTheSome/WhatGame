@@ -16,8 +16,12 @@ export default function Page() {
 
   async function handleResponse(response: object) {
     console.log(response);
-    save("token", response.token);
-    save("user", response.user);
+    if (response["email"] != null) {
+      setError(response["email"]);
+    } else {
+      save("token", response.access_token);
+      save("userName", response.user.name);
+    }
   }
 
   async function signUp(name: string, email: string, password: string) {
@@ -86,7 +90,9 @@ export default function Page() {
         return;
       }
 
-      // router.replace("/");
+      if ((await SecureStore.getItemAsync("token")) != null && error == null) {
+        router.replace("/");
+      }
     }
   };
 

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class game extends Model
+class Game extends Model
 {
     protected $table = 'games';
 
@@ -19,16 +19,12 @@ class game extends Model
     public function getInfo()
     {
         try {
-            $results =  Http::get('https://api.rawg.io/api/games/{game_id}?key={key}', [
-                'key' => env('RAWG_API_KEY'),
-                'game_id' => $this->game_id,
-            ]);
+            $results =  Http::get("https://api.rawg.io/api/games/{$this->game_id}?key=" . env('RAWG_API_KEY'));
 
             $results->throw();
 
             return $results->json();
         } catch (Exception $e) {
-            // Handle the error
             Log::error('Failed to get games from RAWG API', [
                 'error' => $e->getMessage()
             ]);

@@ -7,19 +7,6 @@ import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 import { Colors } from "constants/Colors";
 import * as SecureStore from "expo-secure-store";
 
-function RouteGuard({ children }: { children: React.ReactNode }) {
-  //   const router = useRouter();
-  //   const segments = useSegments();
-
-  //   useEffect(() => {
-  //     if (SecureStore.getItemAsync("token") != null) {
-  //       router.replace("/auth");
-  //     }
-  //   }, [segments]);
-
-  return <>{children}</>;
-}
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -32,11 +19,9 @@ export default function RootLayout() {
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <PaperProvider theme={theme}>
-          <RouteGuard>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            </Stack>
-          </RouteGuard>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
         </PaperProvider>
       </GestureHandlerRootView>
     </>

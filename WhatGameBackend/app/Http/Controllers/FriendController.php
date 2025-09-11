@@ -13,7 +13,7 @@ class FriendController extends Controller
     {
         try {
             $request->validate([
-                $request->receiver_id => 'required|exists:users,id',
+                "receiver_id" => 'required|exists:users,id',
             ]);
 
             Friend::create([
@@ -28,18 +28,14 @@ class FriendController extends Controller
                 'error' => $th->getMessage()
             ]);
 
-            return response()->json(['error' => 'Failed to add friend'], 500);
+            return response()->json(['error' => 'Failed to add friend', 'errorMessage' => $th->getMessage()], 500);
         }
     }
 
     public function getFriends(Request $request)
     {
         try {
-            $request->validate([
-                $request->user_id => 'required|exists:users,id',
-            ]);
-
-            $friends = Friend::where('sender_id', $request->user_id)->andWhere('accepted', true)->orWhere('receiver_id', $request->user_id)->get();
+            $friends = Friend::where('sender_id', $request->user()->id);
 
             return response()->json($friends, 200);
         } catch (Throwable $th) {
@@ -47,7 +43,7 @@ class FriendController extends Controller
                 'error' => $th->getMessage()
             ]);
 
-            return response()->json(['error' => 'Failed to get friends'], 500);
+            return response()->json(['error' => 'Failed to get friends', 'errorMessage' => $th->getMessage()], 500);
         }
     }
 
