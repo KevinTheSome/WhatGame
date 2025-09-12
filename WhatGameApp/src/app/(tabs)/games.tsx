@@ -6,6 +6,7 @@ import {
   Searchbar,
   SegmentedButtons,
   useTheme,
+  ActivityIndicator,
 } from "react-native-paper";
 import GameCard from "components/GameCard";
 import { ScrollView } from "react-native-gesture-handler";
@@ -22,7 +23,7 @@ export default function Tab() {
       setResults({ results: [] });
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -80,7 +81,7 @@ export default function Tab() {
   }
 
   const timer = useRef<number | null>(null);
-  
+
   useEffect(() => {
     if (filter === "favourite") {
       fetchFavGames();
@@ -88,7 +89,7 @@ export default function Tab() {
     }
 
     if (timer.current) clearTimeout(timer.current);
-    
+
     if (searchQuery.trim() === "") {
       setResults({ results: [] });
       return;
@@ -148,10 +149,12 @@ export default function Tab() {
           {
             value: "browse",
             label: "Browse",
+            icon: "magnify",
           },
           {
             value: "favourite",
             label: "Favourite",
+            icon: "heart",
           },
         ]}
       />
@@ -162,7 +165,13 @@ export default function Tab() {
             "https://as1.ftcdn.net/v2/jpg/00/51/55/32/1000_F_51553287_9jm0S2CV13BvIsqvqiJCaJAxpX4TzjGy.jpg",
         }}
       /> */}
-      {JsxGames()}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
+        </View>
+      ) : (
+        JsxGames()
+      )}
     </ScrollView>
   );
 }
@@ -174,8 +183,13 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

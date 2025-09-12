@@ -38,6 +38,19 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function delUser(Request $request){
+        $request->validate([
+            "user_pass" => 'required|string|min:8'
+        ]);
+
+        if(!Hash::check($request->user_pass, $request->user()->password)){
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $request->user()->delete();
+        return response()->json(['message' => 'User deleted'], 200);
+    }
+
     public function login(Request $request)
     {
         if (!Auth::attempt($request->only('email', 'password'))) {

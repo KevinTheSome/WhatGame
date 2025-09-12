@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     Route::post('/logout', [AuthController::class, 'logout']) ->name('logout');
+    Route::post('/delUser', [AuthController::class, 'delUser']) ->name('delUser');
 
     // favourites
     Route::post('/search', [GamesController::class, 'searchGame'])->name('search');
@@ -29,7 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // friends
     Route::post('/addFriend', [FriendController::class, 'addFriend'])->name('addFriend');
     Route::get('/getFriends', [FriendController::class, 'getFriends'])->name('getFriends');
+    Route::get('/getPending', [FriendController::class, 'getPending'])->name('getPending');
     Route::post('/delFriend', [FriendController::class, 'delFriend'])->name('delFriend');
+    Route::post('/peopleSearch', [FriendController::class, 'peopleSearch'])->name('peopleSearch');
     
     // lobby system
     Route::prefix('lobby')->group(function () {

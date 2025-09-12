@@ -8,7 +8,7 @@ class Friend extends Model
 {
     protected $fillable = [
         'accepted',
-        'sender',
-        'receiver',
+        'sender_id',
+        'receiver_id',
     ];
 }
