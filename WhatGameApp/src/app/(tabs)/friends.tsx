@@ -30,8 +30,83 @@ export default function FriendsTab() {
     }
   }, [activeTab]);
 
-  async function addFriend(e: Event) {}
-  async function acceptFriend(e: Event) {}
+  async function addFriend(friend: any) {
+    console.log("friend id: " + friend.id);
+    try {
+      const response = await fetch(
+        process.env.EXPO_PUBLIC_API_URL + "/addFriend",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+          },
+          body: JSON.stringify({ friend_id: friend.id }),
+        }
+      );
+      const data = await response.json();
+      if (data["error"] != null) {
+        console.error(data["error"]);
+        console.error(data["errorMessage"]);
+      } else {
+        fetchRequests(); // Refresh the requests list
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function acceptFriend(friend: any) {
+    try {
+      const response = await fetch(
+        process.env.EXPO_PUBLIC_API_URL + "/acceptFriend",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+          },
+          body: JSON.stringify({ friend_id: friend.id }),
+        }
+      );
+      const data = await response.json();
+      if (data["error"] != null) {
+        console.error(data["error"]);
+      } else {
+        fetchFriends(); // Refresh the friends list
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function removeFriend(friend: any) {
+    console.log("friend id: " + friend.id);
+    try {
+      const response = await fetch(
+        process.env.EXPO_PUBLIC_API_URL + "/removeFriend",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+          },
+          body: JSON.stringify({ friend_id: friend.id }),
+        }
+      );
+      const data = await response.json();
+      if (data["error"] != null) {
+        console.error(data["error"]);
+      } else {
+        fetchFriends(); // Refresh the friends list
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   async function fetchRequests() {
     setIsLoading(true);
@@ -69,12 +144,13 @@ export default function FriendsTab() {
       const response = await fetch(
         process.env.EXPO_PUBLIC_API_URL + "/getFriends",
         {
-          method: "GET",
+          method: "POST",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
             Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
           },
+          body: JSON.stringify({ search: searchQuery || "" }),
         }
       );
       const data = await response.json();
@@ -119,32 +195,6 @@ export default function FriendsTab() {
     } catch (error) {
       console.error(error);
       setPeople([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function removeFriend(friend: any) {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        process.env.EXPO_PUBLIC_API_URL + "/delFriend",
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
-          },
-          body: JSON.stringify({ friends_id: friend.id }),
-        }
-      );
-      const data = await response.json();
-      if (data["error"] != null) {
-        console.error(data["error"]);
-      }
-    } catch (error) {
-      console.error(error);
     } finally {
       setIsLoading(false);
     }

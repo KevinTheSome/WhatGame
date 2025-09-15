@@ -7,6 +7,8 @@ use App\Models\User;
 use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Laravel\Pail\ValueObjects\Origin\Console;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class FriendController extends Controller
 {
@@ -17,10 +19,11 @@ public function peopleSearch(Request $request)
                 "search" => 'sometimes|string',
             ]);
 
-            $user_ids = Friend::where('sender_id', $request->user()->id)->pluck('receiver_id')->toArray();
-            $user_ids = array_merge($user_ids, Friend::where('receiver_id', $request->user()->id)->pluck('sender_id')->toArray());
+            $sent_requests = Friend::where('sender_id', $request->user()->id)->pluck('receiver_id')->toArray();
+            $received_requests = Friend::where('receiver_id', $request->user()->id)->pluck('sender_id')->toArray();
+            $friends = array_merge($sent_requests, $received_requests);
 
-            $usersQuery = User::where('id', '!=', $request->user()->id);
+            $usersQuery = User::where('id', '!=', $request->user()->id)->whereNotIn('id', $friends);
 
             if ($request->has('search')) {
                 $usersQuery->where('name', 'like', '%' . $request->search . '%');
@@ -43,19 +46,19 @@ public function peopleSearch(Request $request)
     {
         try {
             $request->validate([
-                "receiver_id" => 'required|exists:users,id',
+                "friend_id" => 'required|exists:users,id',
             ]);
 
-            if(Friend::where('sender_id', $request->user()->id)->where('receiver_id', $request->receiver_id)->exists()) {
+            if(Friend::where('sender_id', $request->user()->id)->where('receiver_id', $request->friend_id)->exists()) {
                 return response()->json(['error' => 'Friend request already sent'], 400);
             }
-            if ($request->receiver_id == $request->user()->id){
+            if ($request->friend_id == $request->user()->id){
                 return response()->json(['error' => 'You can\'t be your own friends'], 400);     
             }
 
             Friend::create([
                 'sender_id' => $request->user()->id,
-                'receiver_id' => $request->receiver_id,
+                'receiver_id' => $request->friend_id,
                 'accepted' => false
             ]);
  
@@ -64,7 +67,6 @@ public function peopleSearch(Request $request)
             Log::error('Failed to add friend', [
                 'error' => $th->getMessage()
             ]);
-
             return response()->json(['error' => 'Failed to add friend', 'errorMessage' => $th->getMessage()], 500);
         }
     }
@@ -104,10 +106,32 @@ public function peopleSearch(Request $request)
     public function getFriends(Request $request)
     {
         $request->validate([
-            "search" => 'sometimes|string',
+            "search" => 'sometimes',
         ]);
+
+
         try {
-            $friends = Friend::where('sender_id', $request->user()->id)->where('accepted', true)->join('users', 'users.id', '=', 'friends.receiver_id')->select('friends.*', 'users.name as receiver_name')->get();
+            $sent_friends_query = Friend::where('sender_id', $request->user()->id)
+                ->where('accepted', true)
+                ->join('users', 'users.id', '=', 'friends.receiver_id')
+                ->select('friends.*', 'users.name');
+
+            $received_friends_query = Friend::where('receiver_id', $request->user()->id)
+                ->where('accepted', true)
+                ->join('users', 'users.id', '=', 'friends.sender_id')
+                ->select('friends.*', 'users.name');
+
+            if ($request->has('search') && $request->search != '') {
+                $searchTerm = '%' . $request->search . '%';
+                $sent_friends_query->where('users.name', 'like', $searchTerm);
+                $received_friends_query->where('users.name', 'like', $searchTerm);
+            }
+
+            $sent_friends = $sent_friends_query->get();
+            $received_friends = $received_friends_query->get();
+
+            $friends = array_merge($sent_friends->toArray(), $received_friends->toArray());
+
             return response()->json($friends, 200);
         } catch (Throwable $th) {
             Log::error('Failed to get friend', [
@@ -121,18 +145,25 @@ public function peopleSearch(Request $request)
     public function getPending(Request $request)
     {
         $request->validate([
-            "search" => 'sometimes|string',
+            "search" => 'sometimes',
         ]);
         try {
-            $sent = Friend::where('sender_id', $request->user()->id)->where('accepted', false)
+            $sent_query = Friend::where('sender_id', $request->user()->id)->where('accepted', false)
             ->join('users', 'users.id', '=', 'friends.receiver_id')
-            ->select('friends.*', 'users.name as receiver_name')
-            ->get();
+            ->select('friends.*', 'users.name');
 
-            $received = Friend::where('receiver_id', $request->user()->id)->where('accepted', false)
+            $received_query = Friend::where('receiver_id', $request->user()->id)->where('accepted', false)
             ->join('users', 'users.id', '=', 'friends.sender_id')
-            ->select('friends.*', 'users.name as sender_name')
-            ->get();
+            ->select('friends.*', 'users.name');
+
+            if ($request->has('search') && $request->search != '') {
+                $searchTerm = '%' . $request->search . '%';
+                $sent_query->where('users.name', 'like', $searchTerm);
+                $received_query->where('users.name', 'like', $searchTerm);
+            }
+
+            $sent = $sent_query->get();
+            $received = $received_query->get();
 
             $friends = array_merge($sent->toArray(), $received->toArray());
 
@@ -146,15 +177,17 @@ public function peopleSearch(Request $request)
         }
     }
 
-    public function delFriend(Request $request)
+
+
+    public function removeFriend(Request $request)
     {
         try {
             $request->validate([
-                "frainds_id" => 'required|exists:users,id',
+                "friend_id" => 'required|exists:friends,id',
             ]);
 
-            Friend::where('sender_id', $request->user()->id)->where('receiver_id', $request->frainds_id)->delete();
-            Friend::where('sender_id', $request->frainds_id)->where('receiver_id', $request->user()->id)->delete();
+            Friend::where('id', $request->friend_id)->delete();
+            
             return response()->json(['success' => 'Friend removed'], 200);
         } catch (Throwable $th) {
             Log::error('Failed to remove friend', [

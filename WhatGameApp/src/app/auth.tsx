@@ -21,6 +21,7 @@ export default function Page() {
     } else {
       save("token", response.access_token);
       save("userName", response.user.name);
+      save("user", JSON.stringify(response.user));
     }
   }
 
