@@ -1,29 +1,27 @@
 import { View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import {
-  Text,
+  Divider,
   Searchbar,
   useTheme,
   Avatar,
-  Divider,
-  Button,
+  List,
   SegmentedButtons,
   ActivityIndicator,
 } from "react-native-paper";
+import FriendListItem from "components/FriendListItem";
+import EmptyConteiner from "components/EmptyConteiner";
 import * as SecureStore from "expo-secure-store";
-
-type Friend = {
-  id: string;
-  name: string;
-  requestStatus?: "pending" | "accepted";
-};
 
 export default function FriendsTab() {
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"friends" | "requests">("friends");
+  const [activeTab, setActiveTab] = useState<"friends" | "requests" | "people">(
+    "friends"
+  );
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState([]);
+  const [people, setPeople] = useState([]);
+  const [requests, setrequests] = useState([]);
   const [friends, setFriends] = useState([]);
 
   useEffect(() => {
@@ -32,13 +30,46 @@ export default function FriendsTab() {
     }
   }, [activeTab]);
 
+  async function addFriend(e: Event) {}
+  async function acceptFriend(e: Event) {}
+
+  async function fetchRequests() {
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        process.env.EXPO_PUBLIC_API_URL + "/getPending",
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (data["error"] != null) {
+        setrequests([]);
+      } else {
+        console.log("requests data: ");
+        console.log(data);
+        setrequests(data);
+      }
+    } catch (error) {
+      console.error(error);
+      setrequests([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function fetchFriends() {
     setIsLoading(true);
     try {
       const response = await fetch(
         process.env.EXPO_PUBLIC_API_URL + "/getFriends",
         {
-          method: "POST",
+          method: "GET",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
@@ -50,7 +81,9 @@ export default function FriendsTab() {
       if (data["error"] != null) {
         setFriends([]);
       } else {
-        setFriends(data.results);
+        console.log("friends data: ");
+        console.log(data);
+        setFriends(data);
       }
     } catch (error) {
       console.error(error);
@@ -60,7 +93,7 @@ export default function FriendsTab() {
     }
   }
 
-  async function handleSearch() {
+  async function getPeople() {
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -77,19 +110,21 @@ export default function FriendsTab() {
       );
       const data = await response.json();
       if (data["error"] != null) {
-        setResults([]);
+        setPeople([]);
       } else {
-        setResults(data.results);
+        console.log("people data: ");
+        console.log(data);
+        setPeople(data);
       }
     } catch (error) {
       console.error(error);
-      setResults([]);
+      setPeople([]);
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function removeFriend(friend: Friend) {
+  async function removeFriend(friend: any) {
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -118,26 +153,28 @@ export default function FriendsTab() {
   const timer = useRef<number | null>(null);
 
   useEffect(() => {
-    if (activeTab === "favourite") {
+    if (activeTab === "friends") {
       fetchFriends();
       return;
     }
 
-    if (timer.current) clearTimeout(timer.current);
+    if (activeTab === "people") {
+      if (timer.current) clearTimeout(timer.current);
 
-    if (searchQuery.trim() === "") {
-      setResults([]);
-      return;
+      timer.current = window.setTimeout(() => {
+        getPeople();
+      }, 500);
+
+      return () => {
+        if (timer.current) clearTimeout(timer.current);
+      };
     }
 
-    timer.current = window.setTimeout(() => {
-      handleSearch();
-    }, 500);
-
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, [searchQuery]);
+    if (activeTab === "requests") {
+      fetchRequests();
+      return;
+    }
+  }, [activeTab, searchQuery]);
 
   return (
     <View
@@ -151,19 +188,14 @@ export default function FriendsTab() {
 
       <SegmentedButtons
         value={activeTab}
-        onValueChange={(value) => setActiveTab(value as "friends" | "requests")}
+        onValueChange={(value) =>
+          setActiveTab(value as "friends" | "requests" | "people")
+        }
         style={{ marginVertical: 8 }}
         buttons={[
-          {
-            value: "friends",
-            label: "Friends",
-            icon: "account-group",
-          },
-          {
-            value: "requests",
-            label: "Requests",
-            icon: "account-clock",
-          },
+          { value: "friends", label: "Friends", icon: "account-group" },
+          { value: "people", label: "People", icon: "account-search" },
+          { value: "requests", label: "Requests", icon: "account-clock" },
         ]}
       />
 
@@ -173,14 +205,28 @@ export default function FriendsTab() {
         </View>
       ) : (
         <FlatList
-          data={activeTab === "friends" ? friends : results}
+          data={
+            activeTab === "friends"
+              ? friends
+              : activeTab === "requests"
+              ? requests
+              : people
+          }
+          keyExtractor={(item) => item.id.toString()}
+          ListEmptyComponent={() =>
+            EmptyConteiner("Nothing found for " + activeTab)
+          }
           renderItem={({ item }) => (
-            <View>
-              <TouchableOpacity onPress={() => removeFriend(item)}>
-                <Text style={styles.friendName}>{item.name}</Text>
-              </TouchableOpacity>
-            </View>
+            <FriendListItem
+              friend={item}
+              type={activeTab}
+              key={item.id}
+              handleAddFriend={addFriend}
+              handleRemoveFriend={removeFriend}
+              handleAcceptFriend={acceptFriend}
+            />
           )}
+          ItemSeparatorComponent={() => <Divider />}
         />
       )}
     </View>
@@ -195,6 +241,11 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    marginTop: 50,
     alignItems: "center",
   },
   friendName: {

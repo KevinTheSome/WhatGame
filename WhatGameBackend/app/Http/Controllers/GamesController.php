@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
