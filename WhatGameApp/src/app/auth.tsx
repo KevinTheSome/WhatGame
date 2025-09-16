@@ -14,6 +14,13 @@ export default function Page() {
   const router = useRouter();
   const theme = useTheme();
 
+  useEffect(() => {
+    const clearToken = async () => {
+      await SecureStore.deleteItemAsync("token");
+    };
+    clearToken();
+  }, []);
+
   async function handleResponse(response: object) {
     console.log(response);
     if (response["email"] != null) {
@@ -39,6 +46,9 @@ export default function Page() {
         }
       );
       const json = await response.json();
+      if (json["error"] != null) {
+        return json["error"];
+      }
       handleResponse(json);
     } catch (error) {
       return "Failed to sign up";
@@ -60,13 +70,22 @@ export default function Page() {
         body: JSON.stringify({ email, password }),
       });
       const json = await response.json();
+      if (json["error"] != null) {
+        return json["error"];
+      }
       handleResponse(json);
     } catch (error) {
       return "Failed to sign in";
     }
   }
+
   const handleAuth = async () => {
     if (!email || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (isSignUp && !name) {
       setError("Please fill in all fields.");
       return;
     }
@@ -78,22 +97,20 @@ export default function Page() {
 
     setError(null);
 
+    let authError;
     if (isSignUp) {
-      const error = await signUp(name, email, password);
-      if (error) {
-        setError(error);
-        return;
-      }
+      authError = await signUp(name, email, password);
     } else {
-      const error = await signIn(email, password);
-      if (error) {
-        setError(error);
-        return;
-      }
+      authError = await signIn(email, password);
+    }
 
-      if ((await SecureStore.getItemAsync("token")) != null && error == null) {
-        router.replace("/");
-      }
+    if (authError) {
+      setError(authError);
+      return;
+    }
+
+    if ((await SecureStore.getItemAsync("token")) != null) {
+      router.replace("/");
     }
   };
 
@@ -109,6 +126,11 @@ export default function Page() {
       <View
         style={[styles.content, { backgroundColor: theme.colors.background }]}
       >
+        <View style={[styles.titleContainer, { flexDirection: 'column', justifyContent: 'flex-end' }]}>  
+          <Text style={[styles.title, { color: theme.colors.primary, fontWeight: "bold", fontSize: 48  }]} variant="headlineLarge">
+            WhatGame?
+          </Text>
+        </View>
         <Text style={styles.title} variant="headlineMedium">
           {" "}
           {isSignUp ? "Create Account" : "Welcome Back"}
@@ -166,6 +188,11 @@ export default function Page() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  titleContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 48,
   },
   content: {
     flex: 1,
