@@ -13,9 +13,10 @@ import {
 } from "react-native-paper";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "expo-router";
 
 export default function Tab() {
-  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,6 +24,13 @@ export default function Tab() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedEmail, setEditedEmail] = useState("");
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   async function getUser() {
     const userString = await SecureStore.getItemAsync("user");
@@ -94,7 +102,12 @@ export default function Tab() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.background, paddingTop: insets.top },
+      ]}
+    >
       <Card style={styles.card}>
         <Card.Title
           title="Account"
@@ -103,7 +116,9 @@ export default function Tab() {
         <Card.Content>
           <Text>Username: {user?.name}</Text>
           <Text>Email: {user?.email}</Text>
-          <Button onPress={() => setIsEditModalVisible(true)}>Edit Profile</Button>
+          <Button onPress={() => setIsEditModalVisible(true)}>
+            Edit Profile
+          </Button>
           <Button onPress={logout}>Logout</Button>
         </Card.Content>
       </Card>
@@ -130,7 +145,11 @@ export default function Tab() {
             secureTextEntry
             onChangeText={setPassword}
           />
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {error ? (
+            <Text style={[styles.errorText, { color: theme.colors.error }]}>
+              {error}
+            </Text>
+          ) : null}
           <Button onPress={delUser}>Delete User</Button>
         </Card.Content>
       </Card>
@@ -179,7 +198,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   errorText: {
-    color: 'red',
     marginTop: 8,
   },
   modalContainer: {

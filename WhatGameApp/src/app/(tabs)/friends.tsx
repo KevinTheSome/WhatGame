@@ -4,17 +4,16 @@ import {
   Divider,
   Searchbar,
   useTheme,
-  Avatar,
-  List,
   SegmentedButtons,
   ActivityIndicator,
 } from "react-native-paper";
 import FriendListItem from "components/FriendListItem";
 import EmptyConteiner from "components/EmptyConteiner";
 import * as SecureStore from "expo-secure-store";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "expo-router";
 
 export default function FriendsTab() {
-  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"friends" | "requests" | "people">(
     "friends"
@@ -23,6 +22,13 @@ export default function FriendsTab() {
   const [people, setPeople] = useState([]);
   const [requests, setrequests] = useState([]);
   const [friends, setFriends] = useState([]);
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   useEffect(() => {
     if (activeTab === "friends") {
@@ -228,7 +234,10 @@ export default function FriendsTab() {
 
   return (
     <View
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.background, paddingTop: insets.top },
+      ]}
     >
       <Searchbar
         placeholder="Search for people"

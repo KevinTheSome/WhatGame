@@ -1,5 +1,7 @@
 import { View, StyleSheet } from "react-native";
+import { useNavigation } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect, useRef } from "react";
 import {
   Text,
@@ -17,6 +19,12 @@ export default function Tab() {
   const [results, setResults] = useState({ results: [] });
   const [isLoading, setIsLoading] = useState(false);
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
   async function fetchGames() {
     if (searchQuery.trim() === "") {
@@ -134,7 +142,10 @@ export default function Tab() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.background, paddingTop: insets.top },
+      ]}
     >
       <Searchbar
         placeholder="Search for a game"
