@@ -76,6 +76,32 @@ class AuthController extends Controller
         return response()->json(['message' => 'Successfully logged out']);
     }
 
+    public function changePassword(Request $request){
+        $request->validate([
+            "user_pass" => 'required|string|min:8',
+            "new_pass" => 'required|string|min:8',
+            "new_pass_confirm" => 'required|string|min:8',
+        ]);
+
+        if(!Hash::check($request->user_pass, $request->user()->password)){
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if($request->new_pass == $request->user()->password){
+            return response()->json(['error' => 'Passwords can\'t be the same'], 400);
+        }
+
+        if($request->new_pass != $request->new_pass_confirm){
+            return response()->json(['error' => 'Passwords do not match'], 400);
+        }
+
+        $request->user()->update([
+            'password' => Hash::make($request->new_pass)
+        ]);
+
+        return response()->json(['message' => 'Password changed successfully']);
+    }
+
     public function updateUser(Request $request)
     {
         $user = $request->user();

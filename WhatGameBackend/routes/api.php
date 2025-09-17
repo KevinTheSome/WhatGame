@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']) ->name('logout');
     Route::post('/delUser', [AuthController::class, 'delUser']) ->name('delUser');
     Route::post('/updateUser', [AuthController::class, 'updateUser'])->name('updateUser');
+    Route::post('/changePassword', [AuthController::class, 'changePassword'])->name('changePassword');
 
     // favourites
     Route::post('/search', [GamesController::class, 'searchGame'])->name('search');

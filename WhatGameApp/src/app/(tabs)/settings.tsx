@@ -24,6 +24,10 @@ export default function Tab() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedEmail, setEditedEmail] = useState("");
+  const [isChangePasswordModalVisible, setIsChangePasswordModalVisible] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const navigation = useNavigation();
@@ -62,6 +66,47 @@ export default function Tab() {
   async function delUser() {
     // ... (rest of the function is unchanged)
   }
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/changePassword`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+          },
+          body: JSON.stringify({
+            user_pass: oldPassword,
+            new_pass: newPassword,
+            new_pass_confirm: confirmNewPassword,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsChangePasswordModalVisible(false);
+        setOldPassword("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+        setError("");
+      } else {
+        setError(data.error || "Failed to change password");
+      }
+    } catch (error) {
+      setError("An unexpected error occurred.");
+      console.error(error);
+    }
+  };
 
   const handleUpdateProfile = async () => {
     try {
@@ -118,6 +163,9 @@ export default function Tab() {
           <Text>Email: {user?.email}</Text>
           <Button onPress={() => setIsEditModalVisible(true)}>
             Edit Profile
+          </Button>
+          <Button onPress={() => setIsChangePasswordModalVisible(true)}>
+            Change Password
           </Button>
           <Button onPress={logout}>Logout</Button>
         </Card.Content>
@@ -176,6 +224,42 @@ export default function Tab() {
                 style={styles.input}
               />
               <Button onPress={handleUpdateProfile}>Save</Button>
+            </Card.Content>
+          </Card>
+        </Modal>
+      </Portal>
+
+      <Portal>
+        <Modal
+          visible={isChangePasswordModalVisible}
+          onDismiss={() => setIsChangePasswordModalVisible(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Card>
+            <Card.Title title="Change Password" />
+            <Card.Content>
+              <TextInput
+                label="Old Password"
+                value={oldPassword}
+                onChangeText={setOldPassword}
+                secureTextEntry
+                style={styles.input}
+              />
+              <TextInput
+                label="New Password"
+                value={newPassword}
+                onChangeText={setNewPassword}
+                secureTextEntry
+                style={styles.input}
+              />
+              <TextInput
+                label="Confirm New Password"
+                value={confirmNewPassword}
+                onChangeText={setConfirmNewPassword}
+                secureTextEntry
+                style={styles.input}
+              />
+              <Button onPress={handleChangePassword}>Save</Button>
             </Card.Content>
           </Card>
         </Modal>
