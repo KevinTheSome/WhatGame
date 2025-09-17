@@ -51,6 +51,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'User deleted'], 200);
     }
 
+    // paarbauda lietotāja datus un aizūta derīgu token
     public function login(Request $request)
     {
         if (!Auth::attempt($request->only('email', 'password'))) {

@@ -36,13 +36,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/removeFriend', [FriendController::class, 'removeFriend'])->name('removeFriend');
     Route::post('/peopleSearch', [FriendController::class, 'peopleSearch'])->name('peopleSearch');
     
-    // lobby system
-    Route::prefix('lobby')->group(function () {
-        Route::post('/create', [LobbyController::class, 'createLobby'])->name('lobby.create');
-        Route::post('/join', [LobbyController::class, 'joinLobby'])->name('lobby.join');
-        Route::post('/leave', [LobbyController::class, 'leaveLobby'])->name('lobby.leave');
-        Route::get('/list', [LobbyController::class, 'getLobbies'])->name('lobby.list');
-        Route::get('/info', [LobbyController::class, 'getLobbyInfo'])->name('lobby.info');
-    });
-    
+    // lobbys
+    Route::post('/createLobby', [LobbyController::class, 'createLobby'])->name('createLobby');
+    Route::post('/joinLobby', [LobbyController::class, 'joinLobby'])->name('joinLobby');
+    Route::post('/leaveLobby', [LobbyController::class, 'leaveLobby'])->name('leaveLobby');
+    Route::get('/getLobbies', [LobbyController::class, 'getLobbies'])->name('getLobbies');
+    Route::get('/infoLobby', [LobbyController::class, 'getLobbyInfo'])->name('getLobbyInfo');
 });

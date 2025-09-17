@@ -2,26 +2,92 @@
 
 namespace App\Models;
 
+use App\Models\User;
+
 class Lobby
 {
     private string $id;
     private array $users = [];
-    private string $creatorId;
-    private ?string $name;
+    public string $name;
+    public string $filter;
+    public int $maxPlayers;
+    private ?User $creator = null;
+    private ?array $friendsList = null;
 
-    public function __construct(string $creatorId, ?string $name = null)
+    public function __construct(string $name = "" , string $filter = "public", int $maxPlayers = 2, ?User $creator = null)
     {
         $this->id = uniqid('lobby_');
-        $this->creatorId = $creatorId;
         $this->name = $name;
-        $this->addUser($creatorId);
+        $this->filter = $filter;
+        $this->maxPlayers = $maxPlayers;
+        $this->creator = $creator;
+        
+        // If creator is provided and lobby is friends-only, preload friends list
+        if ($this->creator && $this->filter === 'friends') {
+            $this->friendsList = $this->creator->friends()->pluck('id')->toArray();
+        }
+        
+        $this->addUser($this->creator->id);
+    }
+    
+    /**
+     * Set the creator user object and preload friends if needed
+     */
+    public function setCreator(User $creator): void
+    {
+        $this->creator = $creator;
+        if ($this->filter === 'friends') {
+            $this->friendsList = $creator->friends()->pluck('id')->toArray();
+        }
     }
 
-    public function addUser(string $userId): void
+    public function addUser(string $userId): bool
     {
-        if (!in_array($userId, $this->users)) {
-            $this->users[] = $userId;
+        // If user is already in the lobby, return false
+        if (in_array($userId, $this->users)) {
+            return false;
         }
+        
+        // If lobby is friends-only and user is not the creator, check if they're friends
+        if ($this->filter === 'friends' && $userId !== $this->creator->id) {
+            // If we don't have the friends list yet but have the creator, try to load it
+            if ($this->friendsList === null && $this->creator) {
+                $this->friendsList = $this->creator->friends()->pluck('id')->toArray();
+            }
+            
+            // Check if user is in friends list
+            if ($this->friendsList === null || !in_array($userId, $this->friendsList)) {
+                return false; // User is not in the creator's friends list
+            }
+        }
+        
+        $this->users[] = $userId;
+        return true;
+    }
+    
+    public function canUserJoin(string $userId): bool
+    {
+        // Check if user is already in the lobby
+        if (in_array($userId, $this->users)) {
+            return false;
+        }
+        
+        // Check if lobby is full
+        if (count($this->users) >= $this->maxPlayers) {
+            return false;
+        }
+        
+        // If lobby is friends-only, check if user is in the creator's friends list
+        if ($this->filter === 'friends' && $userId !== $this->creator->id) {
+            // If we don't have the friends list yet but have the creator, try to load it
+            if ($this->friendsList === null && $this->creator) {
+                $this->friendsList = $this->creator->friends()->pluck('id')->toArray();
+            }
+            
+            return $this->friendsList !== null && in_array($userId, $this->friendsList);
+        }
+        
+        return true;
     }
 
     public function removeUser(string $userId): bool
@@ -52,7 +118,7 @@ class Lobby
 
     public function getCreatorId(): string
     {
-        return $this->creatorId;
+        return $this->creator->id;
     }
 
     public function toArray(): array
@@ -60,7 +126,7 @@ class Lobby
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'creator_id' => $this->creatorId,
+            'creator_id' => $this->creator->id,
             'users' => $this->users,
             'user_count' => $this->getUserCount(),
         ];

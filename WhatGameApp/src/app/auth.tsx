@@ -21,6 +21,7 @@ export default function Page() {
     clearToken();
   }, []);
 
+  // pārbauda vai nav kļūda un saglabā "token"
   async function handleResponse(response: object) {
     console.log(response);
     if (response["email"] != null) {
@@ -55,10 +56,12 @@ export default function Page() {
     }
   }
 
+  // Izmantojot expo saglaba lietotne "token"
   async function save(key, value) {
     await SecureStore.setItemAsync(key, value);
   }
 
+  // aisūta datus uz aizmugursistēmu
   async function signIn(email: string, password: string) {
     try {
       const response = await fetch(process.env.EXPO_PUBLIC_API_URL + "/login", {
@@ -79,6 +82,7 @@ export default function Page() {
     }
   }
 
+  // pārbauda vai nav kļūda un aisuta request pareizaja vieta
   const handleAuth = async () => {
     if (!email || !password) {
       setError("Please fill in all fields.");
@@ -126,8 +130,19 @@ export default function Page() {
       <View
         style={[styles.content, { backgroundColor: theme.colors.background }]}
       >
-        <View style={[styles.titleContainer, { flexDirection: 'column', justifyContent: 'flex-end' }]}>  
-          <Text style={[styles.title, { color: theme.colors.primary, fontWeight: "bold", fontSize: 48  }]} variant="headlineLarge">
+        <View
+          style={[
+            styles.titleContainer,
+            { flexDirection: "column", justifyContent: "flex-end" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.title,
+              { color: theme.colors.primary, fontWeight: "bold", fontSize: 48 },
+            ]}
+            variant="headlineLarge"
+          >
             WhatGame?
           </Text>
         </View>
