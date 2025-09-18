@@ -17,7 +17,7 @@ import {
   Divider,
   IconButton,
 } from "react-native-paper";
-import { useNavigation } from "expo-router";
+import { useNavigation, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import LobbyCardItem from "components/LobbyCardItem";
@@ -70,6 +70,9 @@ export default function Tab() {
     getLobbies();
   }, [searchQuery, filterValue]);
 
+  async function handleJoinLobby() {
+    router.push("/(tabs)/lobby/");
+  }
   async function handleLobbyCreate() {
     setIsLoading(true);
     setError(null);
@@ -246,7 +249,11 @@ export default function Tab() {
               </View>
             )}
             renderItem={({ item }) => (
-              <LobbyCardItem lobby={item} key={item.id} />
+              <LobbyCardItem
+                lobby={item}
+                key={item.id}
+                handleJoinLobby={handleJoinLobby}
+              />
             )}
             ItemSeparatorComponent={() => <Divider />}
             showsVerticalScrollIndicator={false}

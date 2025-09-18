@@ -1,11 +1,36 @@
 import { StyleSheet, View } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Text, Card, Button, useTheme, Avatar } from "react-native-paper";
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
 
 export default function LobbyCardItem(props: any) {
   const theme = useTheme();
   const [lobby, setLobby] = useState(props.lobby);
+  const [isInLobby, setIsInLobby] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkIfInLobby = async () => {
+      try {
+        // Get the current user's ID from SecureStore
+        const user = await SecureStore.getItemAsync("user");
+        if (user) {
+          setIsInLobby(lobby.users.includes(JSON.parse(user).id));
+        }
+      } catch (error) {
+        console.error("Error checking if user is in lobby:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkIfInLobby();
+  }, [lobby.users]);
+
+  function handleLogin() {
+    props.handleJoinLobby();
+  }
 
   return (
     <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
@@ -13,9 +38,9 @@ export default function LobbyCardItem(props: any) {
         title={lobby.name}
         titleStyle={styles.title}
         left={(props) => (
-          <Avatar.Icon 
-            {...props} 
-            icon="account-group" 
+          <Avatar.Icon
+            {...props}
+            icon="account-group"
             size={44}
             style={{ backgroundColor: theme.colors.primaryContainer }}
           />
@@ -23,39 +48,52 @@ export default function LobbyCardItem(props: any) {
       />
       <Card.Content style={styles.content}>
         <View style={styles.infoRow}>
-          <MaterialCommunityIcons 
-            name="account-multiple" 
-            size={20}   
-            color={theme.colors.primary} 
+          <MaterialCommunityIcons
+            name="account-multiple"
+            size={20}
+            color={theme.colors.primary}
             style={styles.icon}
           />
           <Text variant="bodyMedium" style={styles.infoText}>
             {lobby.user_count} / {lobby.max_players} players
+            {isInLobby && (
+              <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
+                {" "}
+                (You're here)
+              </Text>
+            )}
           </Text>
         </View>
         {lobby.filter && (
           <View style={styles.infoRow}>
-            <MaterialCommunityIcons 
-              name="account-lock" 
-              size={18} 
-              color={theme.colors.secondary} 
+            <MaterialCommunityIcons
+              name="account-lock"
+              size={18}
+              color={theme.colors.secondary}
               style={styles.icon}
             />
-            <Text variant="bodySmall" style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
-              {lobby.filter === 'all' ? 'Open to all' : 'Private'}
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.infoText,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
+            >
+              {lobby.filter}
             </Text>
           </View>
         )}
       </Card.Content>
       <Card.Actions style={styles.actions}>
-        <Button 
-          mode="contained" 
-          onPress={() => {}}
+        <Button
+          mode="contained"
+          onPress={handleLogin}
           style={styles.button}
           labelStyle={styles.buttonLabel}
           icon="login"
+          disabled={isInLobby}
         >
-          Join Lobby
+          {isInLobby ? "In Lobby" : "Join Lobby"}
         </Button>
       </Card.Actions>
     </Card>
@@ -69,7 +107,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   title: {
-    fontWeight: '600',
+    fontWeight: "600",
     marginVertical: 8,
   },
   content: {
@@ -77,8 +115,8 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 4,
   },
   icon: {
@@ -90,7 +128,7 @@ const styles = StyleSheet.create({
   actions: {
     paddingHorizontal: 16,
     paddingBottom: 16,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   button: {
     borderRadius: 20,
@@ -98,6 +136,6 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

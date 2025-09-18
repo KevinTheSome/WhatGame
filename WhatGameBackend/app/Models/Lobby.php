@@ -3,16 +3,29 @@
 namespace App\Models;
 
 use App\Models\User;
+use Illuminate\Queue\SerializesModels;
 
 class Lobby
 {
     private string $id;
     private array $users = [];
     public string $name;
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'state' => 'boolean',
+    ];
+    
+    public $state = false;
     public string $filter;
     public int $maxPlayers;
     private ?User $creator = null;
     private ?array $friendsList = null;
+
+    use SerializesModels;
 
     public function __construct(string $name = "" , string $filter = "public", int $maxPlayers = 2, ?User $creator = null)
     {
@@ -27,7 +40,9 @@ class Lobby
             $this->friendsList = $this->creator->friends()->pluck('id')->toArray();
         }
         
-        $this->addUser($this->creator->id);
+        if ($this->creator) {
+            $this->addUser($this->creator->id);
+        }
     }
     
     /**
@@ -121,16 +136,34 @@ class Lobby
         return $this->creator->id;
     }
 
+    public function getLobbyState(): bool
+    {
+        return $this->state;
+    }
+
+    public function startLobby(User $user): string
+    {
+        if($user->id !== $this->creator->id) {
+            return 'You are not the creator of this lobby';
+        }else{
+            if($this->state == false) {
+                $this->state = !$this->state;
+            }
+            return 'Lobby started successfully';
+        }
+    }
+
     public function toArray(): array
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'creator_id' => $this->creator->id,
             'users' => $this->users,
-            'user_count' => $this->getUserCount(),
-            'max_players' => $this->maxPlayers,
+            'user_count' => count($this->users), 
+            'state' => (bool) $this->state, // Ensure boolean type
             'filter' => $this->filter,
+            'max_players' => $this->maxPlayers,
+            'creator_id' => $this->creator ? $this->creator->id : null,
         ];
     }
 }

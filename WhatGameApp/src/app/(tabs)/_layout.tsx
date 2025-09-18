@@ -7,19 +7,6 @@ import { useState, useEffect } from "react";
 export default function TabLayout() {
   const theme = useTheme();
 
-  // async function RouteGuard({ children }: { children: React.ReactNode }) {
-  //   const router = useRouter();
-  //   const segments = useSegments();
-  //   const token = await SecureStore.getItemAsync("token");
-  //   useEffect(() => {
-  //     if (token == null || token == undefined || token == "") {
-  //       router.replace("/auth");
-  //     }
-  //   }, [segments, token]);
-
-  //   return <>{children}</>;
-  // }
-
   return (
     <Tabs
       screenOptions={{
@@ -47,6 +34,15 @@ export default function TabLayout() {
           title: "Games",
           tabBarIcon: ({ color }) => (
             <Ionicons size={28} name="game-controller" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="lobby"
+        options={{
+          title: "Lobby",
+          tabBarIcon: ({ color }) => (
+            <Ionicons size={28} name="people-circle" color={color} />
           ),
         }}
       />

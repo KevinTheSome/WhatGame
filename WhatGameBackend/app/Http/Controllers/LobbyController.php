@@ -188,22 +188,49 @@ class LobbyController extends Controller
     public function getLobbyInfo(Request $request): JsonResponse
     {
         try {
-            $validated = $request->validate(['lobby_id' => 'required|string']);
-
             $lobbies = Cache::get('lobbies', []);
-            if (!isset($lobbies[$validated['lobby_id']])) {
-                return response()->json(['success' => false, 'message' => 'Lobby not found'], 404);
+            $userId = $request->user()->id;
+
+            $lobby = collect($lobbies)->first(fn($lobby) => in_array($userId, $lobby->getUsers()));
+
+            if (!$lobby) {
+                return response()->json(['success' => false, 'message' => 'Not in any lobby'], 404);
             }
 
             return response()->json([
                 'success' => true,
-                'lobby' => $lobbies[$validated['lobby_id']]->toArray()
+                'lobby' => $lobby->toArray()
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'message' => 'Validation error', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Log::error('Error getting lobby info: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed to get lobby info. Please try again.'], 500);
+        }
+    }
+
+    public function startLobby(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'lobby_id' => 'required|string',
+            ]);
+
+            $lobbies = Cache::get('lobbies', []);
+            if (!isset($lobbies[$validated['lobby_id']])) {
+                return response()->json(['success' => false, 'message' => 'Lobby not found'], 404);
+            }
+
+            $lobby = $lobbies[$validated['lobby_id']];
+            if ($lobby->getCreatorId() != $request->user()->id) {
+                return response()->json(['success' => false, 'message' => 'You are not the creator of this lobby'], 403);
+            }
+
+            $lobby->startLobby($request->user());
+            return response()->json(['success' => true, 'message' => 'Lobby started successfully']);
+        } catch (\Exception $e) {
+            \Log::error('Error starting lobby: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to start lobby. Please try again.'], 500);
         }
     }
 }
