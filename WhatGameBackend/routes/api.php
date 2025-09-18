@@ -41,6 +41,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/createLobby', [LobbyController::class, 'createLobby'])->name('createLobby');
     Route::post('/joinLobby', [LobbyController::class, 'joinLobby'])->name('joinLobby');
     Route::post('/leaveLobby', [LobbyController::class, 'leaveLobby'])->name('leaveLobby');
-    Route::get('/getLobbies', [LobbyController::class, 'getLobbies'])->name('getLobbies');
+    Route::post('/getLobbies', [LobbyController::class, 'getLobbies'])->name('getLobbies');
     Route::get('/infoLobby', [LobbyController::class, 'getLobbyInfo'])->name('getLobbyInfo');
 });

@@ -12,8 +12,16 @@ class LobbyController extends Controller
     public function createLobby(Request $request): JsonResponse
     {
         try {
-            if (!$request->user()) {
+            $user = $request->user();
+            if (!$user) {
                 return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
+            }
+
+            $lobbies = Cache::get('lobbies', []);
+            foreach ($lobbies as $lobby) {
+                if (in_array($user->id, $lobby->getUsers())) {
+                    return response()->json(['success' => false, 'message' => 'You are already in a lobby.'], 409);
+                }
             }
 
             $validated = $request->validate([
@@ -110,6 +118,16 @@ class LobbyController extends Controller
             $lobbies = Cache::get('lobbies', []);
             $userFriends = $user->friends()->pluck('id')->toArray();
 
+            if($request->has('search') && $request->input('search') != '') {
+                $searchTerm = strtolower($request->input('search'));
+
+                $lobbies = collect($lobbies)->filter(function (Lobby $lobby) use ($searchTerm) {
+                    return strpos(strtolower($lobby->name), $searchTerm) !== false;
+                });
+
+            };
+            
+            
             $visibleLobbies = collect($lobbies)->filter(function (Lobby $lobby) use ($user, $userFriends) {
                 if ($lobby->filter === 'public') {
                     return true;
@@ -119,16 +137,17 @@ class LobbyController extends Controller
                     return in_array($lobby->getCreatorId(), $userFriends) || $lobby->getCreatorId() === $user->id;
                 }
 
+
                 return false;
             })->map(fn(Lobby $lobby) => $lobby->toArray());
 
             return response()->json([
                 'success' => true,
                 'lobbies' => array_values($visibleLobbies->toArray())
-            ]);
+            ],200);
         } catch (\Exception $e) {
             \Log::error('Error getting lobbies: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to retrieve lobbies. Please try again.'], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to retrieve lobbies. Please try again.'], 500);
         }
     }
 
