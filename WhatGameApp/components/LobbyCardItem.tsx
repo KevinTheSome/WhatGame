@@ -29,7 +29,7 @@ export default function LobbyCardItem(props: any) {
   }, [lobby.users]);
 
   function handleLogin() {
-    props.handleJoinLobby();
+    props.handleJoinLobby(lobby);
   }
 
   return (

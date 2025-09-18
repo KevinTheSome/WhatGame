@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { useRouter, useNavigation } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface User {
   id: string;
@@ -21,6 +22,7 @@ interface Lobby {
 
 export default function LobbyTab() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const navigation = useNavigation();
 
@@ -32,10 +34,40 @@ export default function LobbyTab() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   useEffect(() => {
+    const fetchLobbyInfo = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_API_URL}/getLobbyInfo`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${await SecureStore.getItemAsync(
+                "token"
+              )}`,
+            },
+          }
+        );
+        const data = await response.json();
+        if (data["error"] != null) {
+          console.error(data["error"]);
+          setLobby(null);
+          router.back();
+          return;
+        }
+        console.log(data);
+        setLobby(data.lobby);
+        // setIsHost(data.lobby.users[0].id === data.user.id);
+      } catch (error) {
+        console.error("Error fetching lobby info:", error);
+      }
+    };
+    fetchLobbyInfo();
+  }, []);
+
+  useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
-
-  useEffect(() => {}, []);
 
   const handleVote = (vote: string) => {
     if (!lobby || !currentUser) return;
@@ -46,6 +78,20 @@ export default function LobbyTab() {
   const handleNextGame = () => {};
 
   const handleLeaveLobby = async () => {
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_API_URL}/leaveLobby`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+        },
+        body: JSON.stringify({
+          lobby_id: lobby.id,
+        }),
+      }
+    );
+    await SecureStore.deleteItemAsync("currentLobby");
     router.back();
   };
 
@@ -66,9 +112,14 @@ export default function LobbyTab() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
+      >
         <Text variant="headlineMedium" style={styles.lobbyName}>
-          placeholder lobby name
+          {lobby?.name}
         </Text>
       </View>
 

@@ -70,8 +70,36 @@ export default function Tab() {
     getLobbies();
   }, [searchQuery, filterValue]);
 
-  async function handleJoinLobby() {
-    router.push("/(tabs)/lobby/");
+  async function save(key, value) {
+    await SecureStore.setItemAsync(key, value);
+  }
+
+  async function handleJoinLobby(selectedLobby) {
+    const token = await SecureStore.getItemAsync("token");
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/joinLobby`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            lobby_id: selectedLobby.id,
+          }),
+        }
+      );
+      const data = await response.json();
+      if (data["error"] != null) {
+        console.error(data["error"]);
+      } else {
+        await save("currentLobby", JSON.stringify(selectedLobby));
+        router.push("/(tabs)/lobby/");
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
   async function handleLobbyCreate() {
     setIsLoading(true);

@@ -14,13 +14,13 @@ class LobbyController extends Controller
         try {
             $user = $request->user();
             if (!$user) {
-                return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
+                return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
             }
 
             $lobbies = Cache::get('lobbies', []);
             foreach ($lobbies as $lobby) {
                 if (in_array($user->id, $lobby->getUsers())) {
-                    return response()->json(['success' => false, 'message' => 'You are already in a lobby.'], 409);
+                    return response()->json(['success' => false, 'error' => 'You are already in a lobby.'], 409);
                 }
             }
 
@@ -34,7 +34,7 @@ class LobbyController extends Controller
             $existingLobby = collect($lobbies)->first(fn($lobby) => strtolower($lobby->name) === strtolower($validated['name']));
 
             if ($existingLobby) {
-                return response()->json(['success' => false, 'message' => 'A lobby with this name already exists'], 409);
+                return response()->json(['success' => false, 'error' => 'A lobby with this name already exists'], 409);
             }
 
             $lobby = new Lobby(
@@ -54,10 +54,10 @@ class LobbyController extends Controller
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Validation error', 'errors' => $e->errors()], 422);
+            return response()->json(['success' => false, 'error' => 'Validation error', 'errorMessages' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Log::error('Error creating lobby: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to create lobby. Please try again.'], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to create lobby. Please try again.'], 500);
         }
     }
 
@@ -65,29 +65,29 @@ class LobbyController extends Controller
     {
         try {
             if (!$request->user()) {
-                return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
+                return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
             }
 
             $validated = $request->validate(['lobby_id' => 'required|string']);
 
             $lobbies = Cache::get('lobbies', []);
             if (!isset($lobbies[$validated['lobby_id']])) {
-                return response()->json(['success' => false, 'message' => 'Lobby not found'], 404);
+                return response()->json(['success' => false, 'error' => 'Lobby not found'], 404);
             }
 
             $lobby = $lobbies[$validated['lobby_id']];
             $user = $request->user();
 
             if (in_array($user->id, $lobby->getUsers())) {
-                return response()->json(['success' => false, 'message' => 'You are already in this lobby'], 400);
+                return response()->json(['success' => false, 'error' => 'You are already in this lobby'], 400);
             }
 
             if ($lobby->getUserCount() >= $lobby->maxPlayers) {
-                return response()->json(['success' => false, 'message' => 'Lobby is full'], 400);
+                return response()->json(['success' => false, 'error' => 'Lobby is full'], 400);
             }
 
             if (!$lobby->addUser($user->id)) {
-                return response()->json(['success' => false, 'message' => 'Failed to join lobby. You may not have permission to join this lobby.'], 403);
+                return response()->json(['success' => false, 'error' => 'Failed to join lobby. You may not have permission to join this lobby.'], 403);
             }
 
             $lobbies[$validated['lobby_id']] = $lobby;
@@ -100,10 +100,10 @@ class LobbyController extends Controller
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Validation error', 'errors' => $e->errors()], 422);
+            return response()->json(['success' => false, 'error' => 'Validation error', 'errorMessage' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Log::error('Error joining lobby: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to join lobby. Please try again.'], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to join lobby. Please try again.'], 500);
         }
     }
 
@@ -112,7 +112,7 @@ class LobbyController extends Controller
         try {
             $user = $request->user();
             if (!$user) {
-                return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
+                return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
             }
 
             $lobbies = Cache::get('lobbies', []);
@@ -157,7 +157,7 @@ class LobbyController extends Controller
 
             $lobbies = Cache::get('lobbies', []);
             if (!isset($lobbies[$validated['lobby_id']])) {
-                return response()->json(['success' => false, 'message' => 'Lobby not found'], 404);
+                return response()->json(['success' => false, 'error' => 'Lobby not found'], 404);
             }
 
             $lobby = $lobbies[$validated['lobby_id']];
@@ -178,10 +178,10 @@ class LobbyController extends Controller
                 'lobby_removed' => false
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Validation error', 'errors' => $e->errors()], 422);
+            return response()->json(['success' => false, 'error' => 'Validation error', 'errorMessage' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Log::error('Error leaving lobby: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to leave lobby. Please try again.', 'error' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to leave lobby. Please try again.', 'errorMessage' => $e->getMessage()], 500);
         }
     }
 
@@ -194,7 +194,7 @@ class LobbyController extends Controller
             $lobby = collect($lobbies)->first(fn($lobby) => in_array($userId, $lobby->getUsers()));
 
             if (!$lobby) {
-                return response()->json(['success' => false, 'message' => 'Not in any lobby'], 404);
+                return response()->json(['success' => false, 'error' => 'Not in any lobby'], 404);
             }
 
             return response()->json([
@@ -202,10 +202,10 @@ class LobbyController extends Controller
                 'lobby' => $lobby->toArray()
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Validation error', 'errors' => $e->errors()], 422);
+            return response()->json(['success' => false, 'error' => 'Validation error', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Log::error('Error getting lobby info: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to get lobby info. Please try again.'], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to get lobby info. Please try again.'], 500);
         }
     }
 
