@@ -122,12 +122,10 @@ class LobbyController extends Controller
                 $searchTerm = strtolower($request->input('search'));
 
                 $lobbies = collect($lobbies)->filter(function (Lobby $lobby) use ($searchTerm) {
-                    return strpos(strtolower($lobby->name), $searchTerm) !== false;
+                    return stripos(strtolower($lobby->name), $searchTerm) !== false;
                 });
+            }
 
-            };
-            
-            
             $visibleLobbies = collect($lobbies)->filter(function (Lobby $lobby) use ($user, $userFriends) {
                 if ($lobby->filter === 'public') {
                     return true;
@@ -136,7 +134,6 @@ class LobbyController extends Controller
                 if ($lobby->filter === 'friends') {
                     return in_array($lobby->getCreatorId(), $userFriends) || $lobby->getCreatorId() === $user->id;
                 }
-
 
                 return false;
             })->map(fn(Lobby $lobby) => $lobby->toArray());
@@ -155,7 +152,6 @@ class LobbyController extends Controller
     {
         try {
             $validated = $request->validate([
-                'user_id' => 'required|string',
                 'lobby_id' => 'required|string',
             ]);
 
@@ -165,7 +161,7 @@ class LobbyController extends Controller
             }
 
             $lobby = $lobbies[$validated['lobby_id']];
-            $lobby->removeUser($validated['user_id']);
+            $lobby->removeUser($request->user()->id);
 
             if ($lobby->getUserCount() === 0) {
                 unset($lobbies[$validated['lobby_id']]);
@@ -185,7 +181,7 @@ class LobbyController extends Controller
             return response()->json(['success' => false, 'message' => 'Validation error', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Log::error('Error leaving lobby: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to leave lobby. Please try again.'], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to leave lobby. Please try again.', 'error' => $e->getMessage()], 500);
         }
     }
 

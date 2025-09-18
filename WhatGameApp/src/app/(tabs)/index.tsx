@@ -20,7 +20,7 @@ import {
 import { useNavigation } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import LobbyListItem from "components/LobbyListItem";
+import LobbyCardItem from "components/LobbyCardItem";
 import EmptyConteiner from "components/EmptyConteiner";
 
 const SEGMENTED_BUTTONS = [
@@ -65,6 +65,10 @@ export default function Tab() {
   useEffect(() => {
     getLobbies();
   }, []);
+
+  useEffect(() => {
+    getLobbies();
+  }, [searchQuery, filterValue]);
 
   async function handleLobbyCreate() {
     setIsLoading(true);
@@ -242,7 +246,7 @@ export default function Tab() {
               </View>
             )}
             renderItem={({ item }) => (
-              <LobbyListItem lobby={item} key={item.id} />
+              <LobbyCardItem lobby={item} key={item.id} />
             )}
             ItemSeparatorComponent={() => <Divider />}
             showsVerticalScrollIndicator={false}

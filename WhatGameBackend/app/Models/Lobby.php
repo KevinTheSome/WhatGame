@@ -129,6 +129,8 @@ class Lobby
             'creator_id' => $this->creator->id,
             'users' => $this->users,
             'user_count' => $this->getUserCount(),
+            'max_players' => $this->maxPlayers,
+            'filter' => $this->filter,
         ];
     }
 }
