@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useNavigation } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ErrorSnackBar from "components/ErrorSnackBar";
 
 interface User {
   id: string;
@@ -29,40 +30,56 @@ export default function LobbyTab() {
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedVote, setSelectedVote] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  useEffect(() => {
-    const fetchLobbyInfo = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL}/getLobbyInfo`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${await SecureStore.getItemAsync(
-                "token"
-              )}`,
-            },
-          }
-        );
-        const data = await response.json();
-        if (data["error"] != null) {
-          console.error(data["error"]);
-          setLobby(null);
-          router.back();
-          return;
+  const fetchLobbyInfo = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/getLobbyInfo`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+          },
         }
-        console.log(data);
-        setLobby(data.lobby);
-        // setIsHost(data.lobby.users[0].id === data.user.id);
-      } catch (error) {
-        console.error("Error fetching lobby info:", error);
+      );
+      const data = await response.json();
+      
+      if (data.error) {
+        setLobby(null);
+        setError(data.error);
+        // If user is not in any lobby, navigate to home
+        if (data.error === "Not in any lobby") {
+          // router.replace('/');
+        }
+        return null;
       }
-    };
+      
+      setLobby(data.lobby);
+      setError(null);
+      return data.lobby;
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred');
+      return null;
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
     fetchLobbyInfo();
+  }, []);
+
+  // Set up polling every 2 seconds
+  useEffect(() => {
+    const intervalId = setInterval(fetchLobbyInfo, 2000);
+    
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -112,6 +129,11 @@ export default function LobbyTab() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
+      <ErrorSnackBar 
+        message={error || ''} 
+        type={error ? 'error' : 'info'}
+        onDismiss={() => setError(null)}
+      />
       <View
         style={[
           styles.header,
@@ -125,7 +147,7 @@ export default function LobbyTab() {
 
       <View style={styles.playersContainer}>
         <Text variant="titleMedium" style={styles.sectionTitle}>
-          Players ({1}/{2})
+          Players ({lobby?.users.length}/{lobby?.max_players})
         </Text>
 
         {/* <FlatList

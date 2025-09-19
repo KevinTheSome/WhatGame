@@ -63,7 +63,9 @@ export default function Page() {
 
   // aisūta datus uz aizmugursistēmu
   async function signIn(email: string, password: string) {
+    // meiģina aizmugursistēmu un saglaba "token"
     try {
+      // aisūta datus uz aizmugursistēmu
       const response = await fetch(process.env.EXPO_PUBLIC_API_URL + "/login", {
         method: "POST",
         headers: {
@@ -72,10 +74,14 @@ export default function Page() {
         },
         body: JSON.stringify({ email, password }),
       });
+      // partaisa aizmugursistēmu atbilde uz "Object"
       const json = await response.json();
+
+      // pārbauda vai nav kļūda no aizmugursistēmu
       if (json["error"] != null) {
         return json["error"];
       }
+      // saglaba atbildi aizmugursistēmu
       handleResponse(json);
     } catch (error) {
       return "Failed to sign in";
@@ -84,23 +90,28 @@ export default function Page() {
 
   // pārbauda vai nav kļūda un aisuta request pareizaja vieta
   const handleAuth = async () => {
+    // pārbauda vai e-pasts vai parole ir tukša
     if (!email || !password) {
       setError("Please fill in all fields.");
       return;
     }
 
+    // pārbauda vai vards nav tukš
     if (isSignUp && !name) {
       setError("Please fill in all fields.");
       return;
     }
 
+    // pārbauda vai parole ir vairak par 8 rakstzīmēm
     if (password.length < 8) {
       setError("Passwords must be at least 8 characters long.");
       return;
     }
 
+    // izdzēš iepriekšējo kļūdu
     setError(null);
 
+    // saglaba kļudu no aizmugursistēmu
     let authError;
     if (isSignUp) {
       authError = await signUp(name, email, password);
@@ -108,11 +119,13 @@ export default function Page() {
       authError = await signIn(email, password);
     }
 
+    // lietotājam izvada kļūdu
     if (authError) {
       setError(authError);
       return;
     }
 
+    // ja veiksmigi aizved lietotāju uz "home" skatu
     if ((await SecureStore.getItemAsync("token")) != null) {
       router.replace("/");
     }

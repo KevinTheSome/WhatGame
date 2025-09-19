@@ -51,17 +51,21 @@ class AuthController extends Controller
         return response()->json(['message' => 'User deleted'], 200);
     }
 
-    // paarbauda lietotāja datus un aizūta derīgu token
+    // parbauda lietotāja datus un aizūta derīgu token
     public function login(Request $request)
     {
+        // parbauda vai lietotjas ir iedevis pareizu informciju par lietotaju
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        // atrod lietotju pēc e-pastu
         $user = User::where('email', $request['email'])->firstOrFail();
 
+        // izveido derīgu token ko var izmantot 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // atbilde lietotajam ar informciju par lietotaju un token
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
