@@ -26,14 +26,9 @@ import ErrorSnackBar from "components/ErrorSnackBar";
 
 const SEGMENTED_BUTTONS = [
   {
-    value: "popular",
-    label: "Popular",
-    icon: "fire",
-  },
-  {
-    value: "newest",
-    label: "Newest",
-    icon: "new-box",
+    value: "all",
+    label: "All",
+    icon: "home-outline",
   },
   {
     value: "following",
@@ -47,7 +42,7 @@ export default function Tab() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterValue, setFilterValue] = useState("popular");
+  const [filterValue, setFilterValue] = useState("all");
   const [lobbies, setLobbies] = useState([]);
   const [errors, setErrors] = useState([]);
   const [newLobbyData, setNewLobbyData] = useState({
@@ -71,11 +66,11 @@ export default function Tab() {
     getLobbies();
   }, [searchQuery, filterValue]);
 
-  async function save(key, value) {
+  async function save(key: string, value: string) {
     await SecureStore.setItemAsync(key, value);
   }
 
-  async function handleJoinLobby(selectedLobby) {
+  async function handleJoinLobby(selectedLobby: any) {
     const token = await SecureStore.getItemAsync("token");
     try {
       const response = await fetch(
@@ -246,26 +241,10 @@ export default function Tab() {
             onSecondaryContainer: theme.colors.onSurfaceVariant,
           },
         }}
-        buttons={[
-          {
-            value: "popular",
-            label: "Popular",
-            icon: "fire",
-          },
-          {
-            value: "newest",
-            label: "Newest",
-            icon: "new-box",
-          },
-          {
-            value: "following",
-            label: "Following",
-            icon: "account-heart-outline",
-          },
-        ]}
+        buttons={SEGMENTED_BUTTONS}
       />
 
-      <View style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <ScrollView style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" />
@@ -291,7 +270,7 @@ export default function Tab() {
             showsVerticalScrollIndicator={false}
           />
         )}
-      </View>
+      </ScrollView>
 
       <Portal>
         <Modal
