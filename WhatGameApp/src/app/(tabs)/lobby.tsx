@@ -1,11 +1,11 @@
 import { View, StyleSheet, FlatList, SafeAreaView } from "react-native";
 import { Text, Button, Avatar, Card, useTheme } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { useRouter, useNavigation } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ErrorSnackBar from "components/ErrorSnackBar";
+import PlayerListItem from "components/PlayerListItem";
 
 interface User {
   id: string;
@@ -17,7 +17,7 @@ interface Lobby {
   name: string;
   users: User[];
   state: "waiting" | "started";
-  current_question?: string;
+  creator_id: number;
   max_players: number;
 }
 
@@ -28,13 +28,22 @@ export default function LobbyTab() {
   const navigation = useNavigation();
 
   const [lobby, setLobby] = useState<Lobby | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedVote, setSelectedVote] = useState<string | null>(null);
-  const [isHost, setIsHost] = useState(false);
+  const [isHost, setIsHost] = useState<boolean | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userId, setUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function getUserId() {
+      const user = await SecureStore.getItemAsync("user");
+      if (user) {
+        setUserId(JSON.parse(user).id);
+      }
+    }
+    getUserId();
+  }, []);
 
   const fetchLobbyInfo = async () => {
     try {
@@ -61,24 +70,22 @@ export default function LobbyTab() {
       }
       
       setLobby(data.lobby);
+      // setIsHost(data.lobby.creator_id === );
       setError(null);
-      return data.lobby;
+      setLoading(false);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
-      return null;
+      setLoading(false);
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchLobbyInfo();
   }, []);
 
-  // Set up polling every 2 seconds
   useEffect(() => {
     const intervalId = setInterval(fetchLobbyInfo, 2000);
     
-    // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
@@ -86,13 +93,13 @@ export default function LobbyTab() {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  const handleVote = (vote: string) => {
-    if (!lobby || !currentUser) return;
+  // const handleVote = (vote: string) => {
+  //   if (!lobby || !currentUser) return;
 
-    setSelectedVote(vote);
-  };
+  //   setSelectedVote(vote);
+  // };
 
-  const handleNextGame = () => {};
+  // const handleNextGame = () => {};
 
   const handleLeaveLobby = async () => {
     const response = await fetch(
@@ -111,6 +118,23 @@ export default function LobbyTab() {
     await SecureStore.deleteItemAsync("currentLobby");
     router.back();
   };
+
+  if (error) {
+    return (
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: theme.colors.background },
+        ]}
+      >
+        <ErrorSnackBar 
+          message={error || ''} 
+          type={error ? 'error' : 'info'}
+          onDismiss={() => setError(null)}
+        />
+      </View>
+    );
+  }
 
   if (loading) {
     return (
@@ -150,27 +174,19 @@ export default function LobbyTab() {
           Players ({lobby?.users.length}/{lobby?.max_players})
         </Text>
 
-        {/* <FlatList
+        <FlatList
           data={lobby.users}
-          keyExtractor={(item) => `user-${item.id}`}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View
-              style={[
-                styles.playerItem,
-                item.id === currentUser.id && styles.currentPlayerItem,
-              ]}
-            >
-              <Avatar.Text size={48} label={item.name[0].toUpperCase()} />
-              <Text style={styles.playerName}>
-                {item.name} {item.id === currentUser.id && "(You)"}
-              </Text>
-              {isHost && item.id === currentUser?.id && (
-                <Text style={styles.hostBadge}>Host</Text>
-              )}
-            </View>
+            <PlayerListItem 
+              name={item.name}
+              id={item.id}
+              isHost={lobby.creator_id === Number(item.id)}
+            />
           )}
           contentContainerStyle={styles.playersList}
-        /> */}
+        />
+
       </View>
 
       <View style={styles.actionsContainer}>
@@ -183,15 +199,14 @@ export default function LobbyTab() {
           Leave Lobby
         </Button>
 
-        {isHost && (
+        {lobby.creator_id === Number(userId) && (
           <Button
             mode="contained"
-            onPress={handleNextGame}
             style={[styles.button, styles.startButton]}
             labelStyle={styles.buttonLabel}
             disabled={lobby.users.length < 2}
           >
-            Start Game
+            Start Voting
           </Button>
         )}
       </View>
@@ -213,7 +228,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   lobbyCode: {
-    color: "#666",
     fontSize: 16,
   },
   playersContainer: {
@@ -266,6 +280,7 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 4,
+    marginVertical: 2,
     height: 50,
     justifyContent: "center",
   },
@@ -273,7 +288,7 @@ const styles = StyleSheet.create({
     borderColor: "#ff3b30",
   },
   startButton: {
-    backgroundColor: "#34c759",
+    borderColor: "#34c759",
   },
   buttonLabel: {
     fontSize: 16,

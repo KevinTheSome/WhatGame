@@ -12,12 +12,14 @@ import {
 } from "react-native-paper";
 import GameCard from "components/GameCard";
 import { ScrollView } from "react-native-gesture-handler";
+import ErrorSnackBar from "components/ErrorSnackBar";
 
 export default function Tab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("browse");
   const [results, setResults] = useState({ results: [] });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -48,12 +50,15 @@ export default function Tab() {
       );
       const data = await response.json();
       if (data["error"] != null) {
+        setError(data["error"]);
         setResults({ results: [] });
       } else {
         setResults(data);
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while fetching games';
+      setError(errorMessage);
+      console.error(errorMessage);
       setResults({ results: [] });
     } finally {
       setIsLoading(false);
@@ -76,12 +81,15 @@ export default function Tab() {
       );
       const data = await response.json();
       if (data["error"] != null) {
+        setError(data["error"]);
         setResults({ results: [] });
       } else {
         setResults({ results: data });
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while fetching favorite games';
+      setError(errorMessage);
+      console.error(errorMessage);
       setResults({ results: [] });
     } finally {
       setIsLoading(false);
@@ -141,12 +149,24 @@ export default function Tab() {
   }
 
   return (
-    <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: theme.colors.background, paddingTop: insets.top },
-      ]}
-    >
+    <>
+      <ErrorSnackBar 
+        message={error || ''} 
+        type={error ? 'error' : 'info'}
+        onDismiss={() => setError(null)}
+      />
+      <ScrollView
+        style={[
+          styles.container,
+          { backgroundColor: theme.colors.background, paddingTop: insets.top },
+        ]}
+      >
+      <Text
+        variant="headlineLarge"
+        style={[styles.title, { color: theme.colors.onBackground }]}
+      >
+        Games
+      </Text>
       <Searchbar
         placeholder="Search for a game"
         onChangeText={setSearchQuery}
@@ -176,14 +196,15 @@ export default function Tab() {
             "https://as1.ftcdn.net/v2/jpg/00/51/55/32/1000_F_51553287_9jm0S2CV13BvIsqvqiJCaJAxpX4TzjGy.jpg",
         }}
       /> */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
-        </View>
-      ) : (
-        JsxGames()
-      )}
-    </ScrollView>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" />
+          </View>
+        ) : (
+          JsxGames()
+        )}
+      </ScrollView>
+    </>
   );
 }
 
@@ -191,6 +212,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  title: {
+    fontWeight: "bold",
+    marginBottom: 16,
   },
   centered: {
     flex: 1,

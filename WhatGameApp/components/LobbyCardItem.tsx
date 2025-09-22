@@ -7,30 +7,12 @@ import * as SecureStore from "expo-secure-store";
 export default function LobbyCardItem(props: any) {
   const theme = useTheme();
   const [lobby, setLobby] = useState(props.lobby);
-  const [isInLobby, setIsInLobby] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkIfInLobby = async () => {
-      try {
-        // Get the current user's ID from SecureStore
-        const user = await SecureStore.getItemAsync("user");
-        if (user) {
-          setIsInLobby(lobby.users.includes(JSON.parse(user).id));
-        }
-      } catch (error) {
-        console.error("Error checking if user is in lobby:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkIfInLobby();
-  }, [lobby.users]);
+  const [isInLobby, setIsInLobby] = useState<boolean | null>(lobby.in_lobby);
 
   function handleLogin() {
     props.handleJoinLobby(lobby);
   }
+  console.log(lobby.in_lobby);
 
   return (
     <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>

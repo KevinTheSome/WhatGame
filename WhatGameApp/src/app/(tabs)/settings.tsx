@@ -153,6 +153,12 @@ export default function Tab() {
         { backgroundColor: theme.colors.background, paddingTop: insets.top },
       ]}
     >
+      <Text
+        variant="headlineLarge"
+        style={[styles.title, { color: theme.colors.onBackground }]}
+      >
+        Settings
+      </Text>
       <Card style={styles.card}>
         <Card.Title
           title="Account"
@@ -272,6 +278,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  title: {
+    fontWeight: "bold",
+    marginBottom: 16,
   },
   card: {
     marginBottom: 16,

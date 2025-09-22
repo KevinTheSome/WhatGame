@@ -1,11 +1,13 @@
 import { View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useState, useEffect, useRef } from "react";
+import ErrorSnackBar from "components/ErrorSnackBar";
 import {
   Divider,
   Searchbar,
   useTheme,
   SegmentedButtons,
   ActivityIndicator,
+  Text,
 } from "react-native-paper";
 import FriendListItem from "components/FriendListItem";
 import EmptyConteiner from "components/EmptyConteiner";
@@ -22,6 +24,7 @@ export default function FriendsTab() {
   const [people, setPeople] = useState([]);
   const [requests, setrequests] = useState([]);
   const [friends, setFriends] = useState([]);
+  const [error, setError] = useState<string | null>(null);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -53,13 +56,15 @@ export default function FriendsTab() {
       );
       const data = await response.json();
       if (data["error"] != null) {
-        console.error(data["error"]);
-        console.error(data["errorMessage"]);
+        setError(data["errorMessage"] || data["error"]);
       } else {
         fetchRequests(); // Refresh the requests list
+        setError(null);
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while adding friend';
+      setError(errorMessage);
+      console.error(errorMessage);
     }
   }
 
@@ -78,18 +83,22 @@ export default function FriendsTab() {
         }
       );
       const data = await response.json();
-      if (data["error"] != null) {
-        console.error(data["error"]);
+      if (data["error"]) {
+        const errorMessage = data["errorMessage"] || data["error"] || 'Failed to accept friend request';
+        setError(errorMessage);
+        console.error(errorMessage);
       } else {
         fetchFriends(); // Refresh the friends list
+        setError(null);
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while accepting friend request';
+      setError(errorMessage);
+      console.error(errorMessage);
     }
   }
 
   async function removeFriend(friend: any) {
-    console.log("friend id: " + friend.id);
     try {
       const response = await fetch(
         process.env.EXPO_PUBLIC_API_URL + "/removeFriend",
@@ -104,13 +113,18 @@ export default function FriendsTab() {
         }
       );
       const data = await response.json();
-      if (data["error"] != null) {
-        console.error(data["error"]);
+      if (data["error"]) {
+        const errorMessage = data["errorMessage"] || data["error"] || 'Failed to remove friend';
+        setError(errorMessage);
+        console.error(errorMessage);
       } else {
         fetchFriends(); // Refresh the friends list
+        setError(null);
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while removing friend';
+      setError(errorMessage);
+      console.error(errorMessage);
     }
   }
 
@@ -130,14 +144,16 @@ export default function FriendsTab() {
       );
       const data = await response.json();
       if (data["error"] != null) {
+        setError(data["error"]);
         setrequests([]);
       } else {
-        console.log("requests data: ");
-        console.log(data);
         setrequests(data);
+        setError(null);
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch friend requests';
+      setError(errorMessage);
+      console.error(errorMessage);
       setrequests([]);
     } finally {
       setIsLoading(false);
@@ -161,14 +177,16 @@ export default function FriendsTab() {
       );
       const data = await response.json();
       if (data["error"] != null) {
+        setError(data["error"]);
         setFriends([]);
       } else {
-        console.log("friends data: ");
-        console.log(data);
         setFriends(data);
+        setError(null);
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch friends';
+      setError(errorMessage);
+      console.error(errorMessage);
       setFriends([]);
     } finally {
       setIsLoading(false);
@@ -192,14 +210,16 @@ export default function FriendsTab() {
       );
       const data = await response.json();
       if (data["error"] != null) {
+        setError(data["error"]);
         setPeople([]);
       } else {
-        console.log("people data: ");
-        console.log(data);
         setPeople(data);
+        setError(null);
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to search for people';
+      setError(errorMessage);
+      console.error(errorMessage);
       setPeople([]);
     } finally {
       setIsLoading(false);
@@ -228,66 +248,76 @@ export default function FriendsTab() {
 
     if (activeTab === "requests") {
       fetchRequests();
-      return;
     }
   }, [activeTab, searchQuery]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: theme.colors.background, paddingTop: insets.top },
-      ]}
-    >
-      <Searchbar
-        placeholder="Search for people"
-        onChangeText={setSearchQuery}
-        value={searchQuery}
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
+      <ErrorSnackBar 
+        message={error || ''} 
+        type={error ? 'error' : 'info'}
+        onDismiss={() => setError(null)}
       />
-
-      <SegmentedButtons
-        value={activeTab}
-        onValueChange={(value) =>
-          setActiveTab(value as "friends" | "requests" | "people")
-        }
-        style={{ marginVertical: 8 }}
-        buttons={[
-          { value: "friends", label: "Friends", icon: "account-group" },
-          { value: "people", label: "People", icon: "account-search" },
-          { value: "requests", label: "Requests", icon: "account-clock" },
-        ]}
-      />
-
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
-        </View>
-      ) : (
-        <FlatList
-          data={
-            activeTab === "friends"
-              ? friends
-              : activeTab === "requests"
-              ? requests
-              : people
-          }
-          keyExtractor={(item) => item.id.toString()}
-          ListEmptyComponent={() =>
-            EmptyConteiner("Nothing found for " + activeTab)
-          }
-          renderItem={({ item }) => (
-            <FriendListItem
-              friend={item}
-              type={activeTab}
-              key={item.id}
-              handleAddFriend={addFriend}
-              handleRemoveFriend={removeFriend}
-              handleAcceptFriend={acceptFriend}
-            />
-          )}
-          ItemSeparatorComponent={() => <Divider />}
+      <View style={styles.header}>
+      <Text
+        variant="headlineLarge"
+        style={[styles.title, { color: theme.colors.onBackground }]}
+      >
+        Friends
+      </Text>
+        <Searchbar
+          placeholder="Search for people"
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={{ marginBottom: 16 }}
         />
-      )}
+
+        <SegmentedButtons
+          value={activeTab}
+          onValueChange={(value) =>
+            setActiveTab(value as "friends" | "requests" | "people")
+          }
+          style={{ marginBottom: 16 }}
+          buttons={[
+            { value: "friends", label: "Friends", icon: "account-group" },
+            { value: "people", label: "People", icon: "account-search" },
+            { value: "requests", label: "Requests", icon: "account-clock" },
+          ]}
+        />
+      </View>
+
+      <View style={styles.content}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" />
+          </View>
+        ) : (
+          <FlatList
+            data={
+              activeTab === "friends"
+                ? friends
+                : activeTab === "requests"
+                ? requests
+                : people
+            }
+            keyExtractor={(item) => item.id.toString()}
+            ListEmptyComponent={() =>
+              EmptyConteiner("Nothing found for " + activeTab)
+            }
+            renderItem={({ item }) => (
+              <FriendListItem
+                friend={item}
+                type={activeTab}
+                key={item.id}
+                handleAddFriend={addFriend}
+                handleRemoveFriend={removeFriend}
+                handleAcceptFriend={acceptFriend}
+              />
+            )}
+            ItemSeparatorComponent={() => <Divider />}
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -297,15 +327,25 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  title: {
+    fontWeight: "bold",
+    marginBottom: 16,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  content: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyContainer: {
     flex: 1,
     marginTop: 50,
-    alignItems: "center",
+    alignItems: 'center',
   },
   friendName: {
     fontSize: 16,

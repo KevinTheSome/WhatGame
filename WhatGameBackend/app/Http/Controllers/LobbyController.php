@@ -6,6 +6,7 @@ use App\Models\Lobby;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class LobbyController extends Controller
 {
@@ -138,6 +139,18 @@ class LobbyController extends Controller
                 return false;
             })->map(fn(Lobby $lobby) => $lobby->toArray());
 
+            if($request->has('filter') && $request->input('filter') == 'popular') {
+                $visibleLobbies = $visibleLobbies->sortByDesc('user_count');
+            }
+            if($request->has('filter') && $request->input('filter') == 'newest') {
+                $visibleLobbies = $visibleLobbies->sortByDesc('created_at');
+            }
+            if($request->has('filter') && $request->input('filter') == 'following') {
+                $visibleLobbies = $visibleLobbies->filter(function (Lobby $lobby) use ($user) {
+                    return $lobby->getCreatorId() === $user->id;
+                });
+            }
+
             return response()->json([
                 'success' => true,
                 'lobbies' => array_values($visibleLobbies->toArray())
@@ -196,10 +209,22 @@ class LobbyController extends Controller
             if (!$lobby) {
                 return response()->json(['success' => false, 'error' => 'Not in any lobby'], 404);
             }
+            $usersId = $lobby->getUsers();
+            $users = DB::table('users')->whereIn('id', $usersId)->select('id', 'name')->get()->toArray();
+
+            $lobby = $lobby->toArray();
+
+            if (in_array($userId, $usersId)) {
+                $lobby['in_lobby'] = true;
+            } else {
+                $lobby['in_lobby'] = false;
+            }
+
+            $lobby['users'] = $users;
 
             return response()->json([
                 'success' => true,
-                'lobby' => $lobby->toArray()
+                'lobby' => $lobby
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'error' => 'Validation error', 'errors' => $e->errors()], 422);

@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import LobbyCardItem from "components/LobbyCardItem";
 import EmptyConteiner from "components/EmptyConteiner";
+import ErrorSnackBar from "components/ErrorSnackBar";
 
 const SEGMENTED_BUTTONS = [
   {
@@ -92,13 +93,15 @@ export default function Tab() {
       );
       const data = await response.json();
       if (data["error"] != null) {
-        console.error(data["error"]);
+        setError(data["error"]);
       } else {
         await save("currentLobby", JSON.stringify(selectedLobby));
         router.push("/(tabs)/lobby/");
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while joining the lobby';
+      setError(errorMessage);
+      console.error(errorMessage);
     }
   }
   async function handleLobbyCreate() {
@@ -162,29 +165,30 @@ export default function Tab() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
           },
-          body: JSON.stringify({ search: searchQuery }),
+          body: JSON.stringify({ search: searchQuery, filter: filterValue }),
         }
       );
       const data = await response.json();
       if (!data["error"]) {
-        console.log(data.lobbies);
         setLobbies(data.lobbies);
       } else {
+        setError(data.error || 'Failed to fetch lobbies');
         setErrors(data);
-        console.error(data);
       }
     } catch (error) {
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while fetching lobbies';
+      setError(errorMessage);
+      console.error(errorMessage);
     }
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: theme.colors.background, paddingTop: insets.top },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
+      <ErrorSnackBar 
+        message={error || ''} 
+        type={error ? 'error' : 'info'}
+        onDismiss={() => setError(null)}
+      />
       <View style={styles.header}>
         <Text
           variant="headlineLarge"

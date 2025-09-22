@@ -24,6 +24,7 @@ class Lobby
     public int $maxPlayers;
     private ?User $creator = null;
     private ?array $friendsList = null;
+    public $created_at;
 
     use SerializesModels;
 
@@ -34,6 +35,7 @@ class Lobby
         $this->filter = $filter;
         $this->maxPlayers = $maxPlayers;
         $this->creator = $creator;
+        $this->created_at = now();
         
         // If creator is provided and lobby is friends-only, preload friends list
         if ($this->creator && $this->filter === 'friends') {
