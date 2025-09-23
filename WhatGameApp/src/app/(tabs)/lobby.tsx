@@ -30,9 +30,7 @@ export default function LobbyTab() {
   const [lobby, setLobby] = useState<Lobby | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedVote, setSelectedVote] = useState<string | null>(null);
-  const [isHost, setIsHost] = useState<boolean | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [votingStarted , setVotingStarted] = useState <boolean | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -70,7 +68,7 @@ export default function LobbyTab() {
       }
       
       setLobby(data.lobby);
-      // setIsHost(data.lobby.creator_id === );
+      setVotingStarted(data.lobby.state);
       setError(null);
       setLoading(false);
     } catch (error) {
@@ -92,6 +90,13 @@ export default function LobbyTab() {
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
+
+  // Voting strted redirect thingy
+  useEffect(() => {
+    if (votingStarted === true) {
+      router.push('/voting');
+    }
+  }, [votingStarted, router]);
 
   const handleLeaveLobby = async () => {
     const response = await fetch(
@@ -216,7 +221,7 @@ export default function LobbyTab() {
           onPress={handleLeaveLobby}
           style={[styles.button, styles.leaveButton]}
           labelStyle={styles.buttonLabel}
-          disabled={lobby.state}
+          disabled={votingStarted}
         >
           Leave Lobby
         </Button>
@@ -227,7 +232,7 @@ export default function LobbyTab() {
             style={[styles.button, styles.startButton]}
             labelStyle={styles.buttonLabel}
             onPress={handleStartLobby}
-            disabled={lobby.users.length < 2 || lobby.state}
+            disabled={lobby.users.length < 2 || votingStarted}
           >
             Start Voting
           </Button>
