@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lobby;
+use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -266,12 +267,12 @@ class LobbyController extends Controller
         }
     }
 
-    public function startLobby(Request $request): JsonResponse
+    public function startVoting(Request $request): JsonResponse
     {
         try {
             $user = $request->user();
             if (!$user) {
-                return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
+                return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
             }
 
             $lobbies = Cache::get('lobbies', []);
@@ -286,12 +287,12 @@ class LobbyController extends Controller
             }
 
             if (!$currentLobby) {
-                return response()->json(['success' => false, 'message' => 'You are not in any lobby'], 404);
+                return response()->json(['success' => false, 'error' => 'You are not in any lobby'], 404);
             }
 
             // Check if user is the creator of the lobby
             if ($currentLobby->getCreatorId() != $user->id) {
-                return response()->json(['success' => false, 'message' => 'You are not the creator of this lobby'], 403);
+                return response()->json(['success' => false, 'error' => 'You are not the creator of this lobby'], 403);
             }
 
             if($currentLobby->startLobby($user)){
@@ -300,11 +301,11 @@ class LobbyController extends Controller
                 Cache::put('lobbies', $lobbies);
                 return response()->json(['success' => true, 'message' => 'Lobby started successfully']);
             }
-
-            return response()->json(['success' => false, 'message' => 'Failed to start lobby. Please try again.'], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to start lobby. Make user you are the creator of the lobby and lobby is not already started'], 500);
         } catch (\Exception $e) {
+
             \Log::error('Error starting lobby: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed to start lobby. Please try again.'], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to start lobby. Please try again.', 'errorMessage' => $e->getMessage()], 500);
         }
     }
 }

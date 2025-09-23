@@ -6,6 +6,7 @@ use App\Http\Controllers\GamesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\LobbyController;
+use App\Http\Controllers\VoteController;
 
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -43,7 +44,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/leaveLobby', [LobbyController::class, 'leaveLobby'])->name('leaveLobby');
     Route::post('/getLobbies', [LobbyController::class, 'getLobbies'])->name('getLobbies');
     Route::get('/getLobbyInfo', [LobbyController::class, 'getLobbyInfo'])->name('getLobbyInfo');
-    Route::post('/startLobby', [LobbyController::class, 'startLobby'])->name('startLobby');
+
+    // voting
+    Route::post('/startVoting', [LobbyController::class, 'startVoting'])->name('startVoting');
+    
+    Route::post('/endVoting', [VoteController::class, 'endVoting'])->name('endVoting'); //ends the lobby and voting
     
     //del later
     Route::get('/getAllLobies', [LobbyController::class, 'getAllLobies'])->name('getAllLobies');

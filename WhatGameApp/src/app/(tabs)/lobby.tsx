@@ -16,7 +16,7 @@ interface Lobby {
   id: string;
   name: string;
   users: User[];
-  state: "waiting" | "started";
+  state: boolean;
   creator_id: number;
   max_players: number;
 }
@@ -113,31 +113,28 @@ export default function LobbyTab() {
   };
 
   const handleStartLobby = async () => {
-    const response = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL}/startLobby`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
-        },
-        body: JSON.stringify({}),
+    try {
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/startVoting`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+          }
+        }
+      );
+
+      const data = await response.json();
+      if (data.error) {
+        setError(data.error);
+        return;
       }
-    );
-    setLoading(true);
-    await SecureStore.deleteItemAsync("currentLobby");
-    const data = await response.json();
-    if (data.error) {
-      setError(data.error);
-      // If user is not in any lobby, navigate to home
-      if (data.error === "Lobby failed to start") {
-        // router.replace('/');
-      }
-      return null;
+      console.log('Start voting response:', data);
+    } catch (error) {
+      console.error('Error starting voting:', error);
+      setError('Network error occurred');
     }
-    setError(null);
-    setLoading(false);
-    
   }
 
   if (error) {
@@ -192,6 +189,9 @@ export default function LobbyTab() {
 
       <View style={styles.playersContainer}>
         <Text variant="titleMedium" style={styles.sectionTitle}>
+          {lobby?.state ? 'The game has started' : ''}
+        </Text>
+        <Text variant="titleMedium" style={styles.sectionTitle}>
           Players ({lobby?.users.length}/{lobby?.max_players})
         </Text>
 
@@ -216,6 +216,7 @@ export default function LobbyTab() {
           onPress={handleLeaveLobby}
           style={[styles.button, styles.leaveButton]}
           labelStyle={styles.buttonLabel}
+          disabled={lobby.state}
         >
           Leave Lobby
         </Button>
@@ -226,7 +227,7 @@ export default function LobbyTab() {
             style={[styles.button, styles.startButton]}
             labelStyle={styles.buttonLabel}
             onPress={handleStartLobby}
-            disabled={lobby.users.length < 2}
+            disabled={lobby.users.length < 2 || lobby.state}
           >
             Start Voting
           </Button>
