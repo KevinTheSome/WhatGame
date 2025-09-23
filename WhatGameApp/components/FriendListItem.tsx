@@ -1,6 +1,6 @@
 import { View, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
-import { Text, List, Button, useTheme } from "react-native-paper";
+import { Text, List, Button, useTheme, Avatar } from "react-native-paper";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as SecureStore from "expo-secure-store";
 
@@ -35,6 +35,17 @@ export default function FriendListItem(props: any) {
             />
           ) : null
         }
+        left={(props) => (
+          <Avatar.Text 
+            size={40} 
+            label={friend.name.charAt(0).toUpperCase()}
+            style={{
+              marginRight: 16,
+              backgroundColor: 'transparent',
+            }}
+            color={theme.colors.primary}
+          />
+        )}
         onPress={() => !isCurrentUser && props.handleAddFriend(friend)}
       />
     );
@@ -47,6 +58,17 @@ export default function FriendListItem(props: any) {
             name="person-remove"
             size={24}
             color={theme.colors.onSurface}
+          />
+        )}
+        left={(props) => (
+          <Avatar.Text 
+            size={40} 
+            label={friend.name.charAt(0).toUpperCase()}
+            style={{
+              marginRight: 16,
+              backgroundColor: 'transparent',
+            }}
+            color={theme.colors.primary}
           />
         )}
         onPress={() => props.handleRemoveFriend(friend)}
@@ -64,6 +86,17 @@ export default function FriendListItem(props: any) {
               color={theme.colors.onSurface}
             />
           )}
+          left={(props) => (
+            <Avatar.Text 
+              size={40} 
+              label={friend.name.charAt(0).toUpperCase()}
+              style={{
+                marginRight: 16,
+                backgroundColor: 'transparent',
+              }}
+              color={theme.colors.primary}
+            />
+          )}
           onPress={() => props.handleRemoveFriend(friend)}
         />
       );
@@ -76,6 +109,17 @@ export default function FriendListItem(props: any) {
               name="person-add"
               size={24}
               color={theme.colors.onSurface}
+            />
+          )}
+          left={(props) => (
+            <Avatar.Text 
+              size={40} 
+              label={friend.name.charAt(0).toUpperCase()}
+              style={{
+                marginRight: 16,
+                backgroundColor: 'transparent',
+              }}
+              color={theme.colors.primary}
             />
           )}
           onPress={() => props.handleAcceptFriend(friend)}

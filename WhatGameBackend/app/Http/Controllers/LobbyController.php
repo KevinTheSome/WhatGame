@@ -10,14 +10,30 @@ use Illuminate\Support\Facades\DB;
 
 class LobbyController extends Controller
 {
+
+    public function getAllLobies(Request $request): JsonResponse
+    {
+        //del test route
+        return response()->json(Cache::get('lobbies', []), 200);
+    }
+
+
+    public function delAllLobies(Request $request): JsonResponse
+    {
+        //del test route
+        Cache::forget('lobbies');
+        return response()->json([], 200);
+    }
+
     public function createLobby(Request $request): JsonResponse
     {
         try {
             $user = $request->user();
+            //auth check
             if (!$user) {
                 return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
             }
-
+            //lobby check
             $lobbies = Cache::get('lobbies', []);
             foreach ($lobbies as $lobby) {
                 if (in_array($user->id, $lobby->getUsers())) {
@@ -25,12 +41,14 @@ class LobbyController extends Controller
                 }
             }
 
+            //validate request
             $validated = $request->validate([
                 'name' => 'required|string|max:50',
                 'filter' => 'required|string|in:public,friends',
                 'max_players' => 'required|integer|min:2|max:24',
             ]);
 
+            //check if lobby with same name exists
             $lobbies = Cache::get('lobbies', []);
             $existingLobby = collect($lobbies)->first(fn($lobby) => strtolower($lobby->name) === strtolower($validated['name']));
 
@@ -38,6 +56,7 @@ class LobbyController extends Controller
                 return response()->json(['success' => false, 'error' => 'A lobby with this name already exists'], 409);
             }
 
+            //create lobby
             $lobby = new Lobby(
                 $validated['name'],
                 $validated['filter'],
@@ -45,6 +64,7 @@ class LobbyController extends Controller
                 $request->user()
             );
 
+            //add lobby to cache
             $lobbies[$lobby->getId()] = $lobby;
             Cache::put('lobbies', $lobbies);
 
@@ -58,7 +78,7 @@ class LobbyController extends Controller
             return response()->json(['success' => false, 'error' => 'Validation error', 'errorMessages' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Log::error('Error creating lobby: ' . $e->getMessage());
-            return response()->json(['success' => false, 'error' => 'Failed to create lobby. Please try again.'], 500);
+            return response()->json(['success' => false, 'error' => 'Failed to create lobby. Please try again.', 'errorMessage' => $e->getMessage()], 500);
         }
     }
 
@@ -117,44 +137,56 @@ class LobbyController extends Controller
             }
 
             $lobbies = Cache::get('lobbies', []);
-            $userFriends = $user->friends()->pluck('id')->toArray();
+            $userFriends = $user->getUsersFriends($user);
 
-            if($request->has('search') && $request->input('search') != '') {
+            // Apply search filter first
+            if ($request->has('search') && $request->input('search') != '') {
                 $searchTerm = strtolower($request->input('search'));
-
                 $lobbies = collect($lobbies)->filter(function (Lobby $lobby) use ($searchTerm) {
                     return stripos(strtolower($lobby->name), $searchTerm) !== false;
                 });
             }
 
-            $visibleLobbies = collect($lobbies)->filter(function (Lobby $lobby) use ($user, $userFriends) {
-                if ($lobby->filter === 'public') {
-                    return true;
-                }
+            // Filter based on request filter type
+            $filterType = $request->input('filter', 'all');
+            $visibleLobbies = collect($lobbies)->filter(function (Lobby $lobby) use ($user, $userFriends, $filterType) {
+                $creatorId = $lobby->getCreatorId();
 
-                if ($lobby->filter === 'friends') {
-                    return in_array($lobby->getCreatorId(), $userFriends) || $lobby->getCreatorId() === $user->id;
+                if ($filterType === 'all') {
+                    if ($lobby->filter === 'public') {
+                        return true;
+                    }
+                    if ($lobby->filter === 'friends') {
+                        return in_array($creatorId, $userFriends) || $creatorId === $user->id;
+                    }
+                    return false;
+                } elseif ($filterType === 'friends') {
+                    return $lobby->filter === 'friends' && in_array($creatorId, $userFriends);
                 }
 
                 return false;
-            })->map(fn(Lobby $lobby) => $lobby->toArray());
+            });
 
-            if($request->has('filter') && $request->input('filter') == 'popular') {
-                $visibleLobbies = $visibleLobbies->sortByDesc('user_count');
-            }
-            if($request->has('filter') && $request->input('filter') == 'newest') {
-                $visibleLobbies = $visibleLobbies->sortByDesc('created_at');
-            }
-            if($request->has('filter') && $request->input('filter') == 'following') {
-                $visibleLobbies = $visibleLobbies->filter(function (Lobby $lobby) use ($user) {
-                    return $lobby->getCreatorId() === $user->id;
-                });
+            // Convert to array and ensure lobby code is included
+            $lobbyArray = $visibleLobbies->map(function (Lobby $lobby) {
+                $lobbyData = $lobby->toArray();
+                // Ensure lobby code is included (adjust property name as needed)
+                if (!isset($lobbyData['lobby_code']) && method_exists($lobby, 'getLobbyCode')) {
+                    $lobbyData['lobby_code'] = $lobby->getLobbyCode();
+                }
+                return $lobbyData;
+            });
+
+            // Sort by user count if 'all' filter is applied
+            if ($filterType === 'all') {
+                $lobbyArray = $lobbyArray->sortByDesc('user_count');
             }
 
             return response()->json([
                 'success' => true,
-                'lobbies' => array_values($visibleLobbies->toArray())
-            ],200);
+                'lobbies' => array_values($lobbyArray->toArray())
+            ], 200);
+
         } catch (\Exception $e) {
             \Log::error('Error getting lobbies: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => 'Failed to retrieve lobbies. Please try again.'], 500);
@@ -237,22 +269,39 @@ class LobbyController extends Controller
     public function startLobby(Request $request): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'lobby_id' => 'required|string',
-            ]);
-
-            $lobbies = Cache::get('lobbies', []);
-            if (!isset($lobbies[$validated['lobby_id']])) {
-                return response()->json(['success' => false, 'message' => 'Lobby not found'], 404);
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
             }
 
-            $lobby = $lobbies[$validated['lobby_id']];
-            if ($lobby->getCreatorId() != $request->user()->id) {
+            $lobbies = Cache::get('lobbies', []);
+
+            // Find the lobby the user is currently in
+            $currentLobby = null;
+            foreach ($lobbies as $lobby) {
+                if (in_array($user->id, $lobby->getUsers())) {
+                    $currentLobby = $lobby;
+                    break;
+                }
+            }
+
+            if (!$currentLobby) {
+                return response()->json(['success' => false, 'message' => 'You are not in any lobby'], 404);
+            }
+
+            // Check if user is the creator of the lobby
+            if ($currentLobby->getCreatorId() != $user->id) {
                 return response()->json(['success' => false, 'message' => 'You are not the creator of this lobby'], 403);
             }
 
-            $lobby->startLobby($request->user());
-            return response()->json(['success' => true, 'message' => 'Lobby started successfully']);
+            if($currentLobby->startLobby($user)){
+                // Update the lobby in cache with the new state
+                $lobbies[$currentLobby->getId()] = $currentLobby;
+                Cache::put('lobbies', $lobbies);
+                return response()->json(['success' => true, 'message' => 'Lobby started successfully']);
+            }
+
+            return response()->json(['success' => false, 'message' => 'Failed to start lobby. Please try again.'], 500);
         } catch (\Exception $e) {
             \Log::error('Error starting lobby: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed to start lobby. Please try again.'], 500);

@@ -131,7 +131,6 @@ public function peopleSearch(Request $request)
             $received_friends = $received_friends_query->get();
 
             $friends = array_merge($sent_friends->toArray(), $received_friends->toArray());
-
             return response()->json($friends, 200);
         } catch (Throwable $th) {
             Log::error('Failed to get friend', [

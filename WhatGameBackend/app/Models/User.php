@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -32,21 +33,22 @@ class User extends Authenticatable
     /**
      * Get all accepted friends
      */
-    public function friends()
+    public function getUsersFriends(User $user)
     {
-        $sentFriends = $this->sentFriendRequests()
-            ->where('accepted', 1)
-            ->with('receiver')
-            ->get()
-            ->pluck('receiver');
+        $sent_friends_query = Friend::where('sender_id', $user->id)
+            ->where('accepted', true)
+            ->join('users', 'users.id', '=', 'friends.receiver_id')
+            ->select('friends.*', 'users.name');
+
+        $received_friends_query = Friend::where('receiver_id', $user->id)
+            ->where('accepted', true)
+            ->join('users', 'users.id', '=', 'friends.sender_id')
+            ->select('friends.*', 'users.name');
             
-        $receivedFriends = $this->receivedFriendRequests()
-            ->where('accepted', 1)
-            ->with('sender')
-            ->get()
-            ->pluck('sender');
-            
-        return $sentFriends->merge($receivedFriends);
+        $sent_friends = $sent_friends_query->get();
+        $received_friends = $received_friends_query->get();
+
+        return $friends = array_merge($sent_friends->toArray(), $received_friends->toArray());
     }
     
     /**
@@ -65,7 +67,7 @@ class User extends Authenticatable
      */
     public function isFriendWith(User $user): bool
     {
-        return $this->friends()->contains('id', $user->id);
+        return $this->getUsersFriends($this)->contains('id', $user->id);
     }
 
     /**

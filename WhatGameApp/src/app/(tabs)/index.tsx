@@ -31,7 +31,7 @@ const SEGMENTED_BUTTONS = [
     icon: "home-outline",
   },
   {
-    value: "following",
+    value: "friends",
     label: "Following",
     icon: "account-heart-outline",
   },
@@ -244,33 +244,31 @@ export default function Tab() {
         buttons={SEGMENTED_BUTTONS}
       />
 
-      <ScrollView style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" />
-          </View>
-        ) : (
-          <FlatList
-            data={lobbies}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={() => (
-              <View style={styles.emptyContainer}>
-                {EmptyConteiner("No lobbies found")}
-              </View>
-            )}
-            renderItem={({ item }) => (
-              <LobbyCardItem
-                lobby={item}
-                key={item.id}
-                handleJoinLobby={handleJoinLobby}
-              />
-            )}
-            ItemSeparatorComponent={() => <Divider />}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
-      </ScrollView>
+      {isLoading ? (
+        <View style={[styles.loadingContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          <ActivityIndicator size="large" />
+        </View>
+      ) : (
+        <FlatList
+          data={lobbies}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={[styles.listContent, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+          ListEmptyComponent={() => (
+            <View style={[styles.emptyContainer, { paddingTop: insets.top }]}>
+              {EmptyConteiner("No lobbies found")}
+            </View>
+          )}
+          renderItem={({ item }) => (
+            <LobbyCardItem
+              lobby={item}
+              key={item.id}
+              handleJoinLobby={handleJoinLobby}
+            />
+          )}
+          ItemSeparatorComponent={() => <Divider />}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       <Portal>
         <Modal

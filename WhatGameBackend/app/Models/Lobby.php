@@ -19,7 +19,7 @@ class Lobby
         'state' => 'boolean',
     ];
     
-    public $state = false;
+    public $state;
     public string $filter;
     public int $maxPlayers;
     private ?User $creator = null;
@@ -36,10 +36,11 @@ class Lobby
         $this->maxPlayers = $maxPlayers;
         $this->creator = $creator;
         $this->created_at = now();
+        $this->state = false;
         
         // If creator is provided and lobby is friends-only, preload friends list
         if ($this->creator && $this->filter === 'friends') {
-            $this->friendsList = $this->creator->friends()->pluck('id')->toArray();
+            $this->friendsList = $this->creator->getUsersFriends($this->creator);
         }
         
         if ($this->creator) {
@@ -54,7 +55,7 @@ class Lobby
     {
         $this->creator = $creator;
         if ($this->filter === 'friends') {
-            $this->friendsList = $creator->friends()->pluck('id')->toArray();
+            $this->friendsList = $this->creator->getUsersFriends($this->creator);
         }
     }
 
@@ -69,7 +70,7 @@ class Lobby
         if ($this->filter === 'friends' && $userId !== $this->creator->id) {
             // If we don't have the friends list yet but have the creator, try to load it
             if ($this->friendsList === null && $this->creator) {
-                $this->friendsList = $this->creator->friends()->pluck('id')->toArray();
+                $this->friendsList = $this->creator->getUsersFriends($this->creator);
             }
             
             // Check if user is in friends list
@@ -98,7 +99,7 @@ class Lobby
         if ($this->filter === 'friends' && $userId !== $this->creator->id) {
             // If we don't have the friends list yet but have the creator, try to load it
             if ($this->friendsList === null && $this->creator) {
-                $this->friendsList = $this->creator->friends()->pluck('id')->toArray();
+                $this->friendsList = $this->creator->getUsersFriends($this->creator);
             }
             
             return $this->friendsList !== null && in_array($userId, $this->friendsList);
@@ -143,16 +144,19 @@ class Lobby
         return $this->state;
     }
 
-    public function startLobby(User $user): string
+    public function startLobby(User $user): bool
     {
         if($user->id !== $this->creator->id) {
-            return 'You are not the creator of this lobby';
-        }else{
-            if($this->state == false) {
-                $this->state = !$this->state;
-            }
-            return 'Lobby started successfully';
+            return false;
         }
+
+        // Only allow starting if the lobby is not already started
+        if($this->state === true) {
+            return false;
+        }
+
+        $this->state = true;
+        return true;
     }
 
     public function toArray(): array
@@ -161,8 +165,8 @@ class Lobby
             'id' => $this->id,
             'name' => $this->name,
             'users' => $this->users,
-            'user_count' => count($this->users), 
-            'state' => (bool) $this->state, // Ensure boolean type
+            'user_count' => count($this->users),
+            'state' => $this->state === true, // Ensure boolean type
             'filter' => $this->filter,
             'max_players' => $this->maxPlayers,
             'creator_id' => $this->creator ? $this->creator->id : null,

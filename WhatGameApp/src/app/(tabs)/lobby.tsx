@@ -93,14 +93,6 @@ export default function LobbyTab() {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  // const handleVote = (vote: string) => {
-  //   if (!lobby || !currentUser) return;
-
-  //   setSelectedVote(vote);
-  // };
-
-  // const handleNextGame = () => {};
-
   const handleLeaveLobby = async () => {
     const response = await fetch(
       `${process.env.EXPO_PUBLIC_API_URL}/leaveLobby`,
@@ -115,9 +107,38 @@ export default function LobbyTab() {
         }),
       }
     );
+    setLoading(true);
     await SecureStore.deleteItemAsync("currentLobby");
     router.back();
   };
+
+  const handleStartLobby = async () => {
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_API_URL}/startLobby`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+        },
+        body: JSON.stringify({}),
+      }
+    );
+    setLoading(true);
+    await SecureStore.deleteItemAsync("currentLobby");
+    const data = await response.json();
+    if (data.error) {
+      setError(data.error);
+      // If user is not in any lobby, navigate to home
+      if (data.error === "Lobby failed to start") {
+        // router.replace('/');
+      }
+      return null;
+    }
+    setError(null);
+    setLoading(false);
+    
+  }
 
   if (error) {
     return (
@@ -204,6 +225,7 @@ export default function LobbyTab() {
             mode="contained"
             style={[styles.button, styles.startButton]}
             labelStyle={styles.buttonLabel}
+            onPress={handleStartLobby}
             disabled={lobby.users.length < 2}
           >
             Start Voting
