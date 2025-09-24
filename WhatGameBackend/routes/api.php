@@ -47,7 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // voting
     Route::post('/startVoting', [LobbyController::class, 'startVoting'])->name('startVoting');
-    
+    Route::get('/getCurrentGame', [VoteController::class, 'getCurrentGame'])->name('getCurrentGame');
     Route::post('/endVoting', [VoteController::class, 'endVoting'])->name('endVoting'); //ends the lobby and voting
     
     //del later

@@ -301,6 +301,57 @@ class VoteController extends Controller
         }
     }
 
+    public function getCurrentGame(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
+            }
+
+            $lobbies = Cache::get('lobbies', []);
+            $currentLobby = null;
+
+            foreach ($lobbies as $lobby) {
+                if (in_array($user->id, $lobby->getUsers())) {
+                    $currentLobby = $lobby;
+                    break;
+                }
+            }
+
+            if (!$currentLobby) {
+                return response()->json(['success' => false, 'error' => 'You are not in any lobby'], 404);
+            }
+
+            if (!$currentLobby->getLobbyState()) {
+                return response()->json(['success' => false, 'error' => 'Voting has not started yet'], 400);
+            }
+
+            $voteId = 'vote_' . $currentLobby->getId();
+            $vote = Cache::get($voteId);
+
+            if (!$vote) {
+                return response()->json(['success' => false, 'error' => 'No voting session found'], 404);
+            }
+
+            $games = $vote->getGames();
+            $gameData = $games[$vote->getCurrentGame()];
+
+            return response()->json([
+                'success' => true,
+                'game_id' => $vote->getCurrentGame(),
+                'game_name' => $gameData['name'],
+                'total_votes' => $gameData['votes'],
+                'upvotes' => $gameData['upvotes'],
+                'downvotes' => $gameData['downvotes']
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error getting current game: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => 'Failed to get current game. Please try again.'], 500);
+        }
+    }
+
     private function getWinner($games)
     {
         if (empty($games)) {
