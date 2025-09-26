@@ -44,10 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/leaveLobby', [LobbyController::class, 'leaveLobby'])->name('leaveLobby');
     Route::post('/getLobbies', [LobbyController::class, 'getLobbies'])->name('getLobbies');
     Route::get('/getLobbyInfo', [LobbyController::class, 'getLobbyInfo'])->name('getLobbyInfo');
-
+    
     // voting
     Route::post('/startVoting', [LobbyController::class, 'startVoting'])->name('startVoting');
-    Route::get('/getCurrentGame', [VoteController::class, 'getCurrentGame'])->name('getCurrentGame');
+    Route::get('/getVoteGames', [VoteController::class, 'getVoteGames'])->name('getVoteGames');
     Route::post('/endVoting', [VoteController::class, 'endVoting'])->name('endVoting'); //ends the lobby and voting
     
     //del later

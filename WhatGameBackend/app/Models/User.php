@@ -65,9 +65,44 @@ class User extends Authenticatable
     /**
      * Check if a user is a friend
      */
+    public function favoritedGames()
+    {
+        return $this->hasMany(Game::class);
+    }
+
+    /**
+     * Check if a user is a friend
+     */
     public function isFriendWith(User $user): bool
     {
         return $this->getUsersFriends($this)->contains('id', $user->id);
+    }
+
+    /**
+     * Get favorited games (basic info without API calls)
+     */
+    public function getFavoritedGames()
+    {
+        return $this->favoritedGames()->get();
+    }
+
+    /**
+     * Get favorited games with their details from RAWG API
+     */
+    public function getFavoritedGamesWithDetails()
+    {
+        $games = $this->favoritedGames()->get();
+        $gamesWithDetails = [];
+
+        foreach ($games as $game) {
+            $gameInfo = $game->getInfo();
+            $gamesWithDetails[] = [
+                'game' => $game,
+                'details' => $gameInfo
+            ];
+        }
+
+        return $gamesWithDetails;
     }
 
     /**

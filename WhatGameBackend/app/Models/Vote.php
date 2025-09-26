@@ -9,7 +9,7 @@ class Vote
 {
     private $id;
     private $lobby;
-    private $games;
+    private $games = [];
     private $playerVotes;
     private $created_at;
 

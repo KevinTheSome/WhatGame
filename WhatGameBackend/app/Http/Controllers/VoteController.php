@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Lobby;
 use App\Models\Vote;
+use App\Models\User;
+use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -11,54 +13,6 @@ use Illuminate\Support\Facades\DB;
 
 class VoteController extends Controller
 {
-    public function getAllPlayersFavoriteGames(Request $request): JsonResponse
-    {
-        try {
-            $user = $request->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'error' => 'User not authenticated'], 401);
-            }
-
-            $lobbies = Cache::get('lobbies', []);
-            $currentLobby = null;
-
-            foreach ($lobbies as $lobby) {
-                if (in_array($user->id, $lobby->getUsers())) {
-                    $currentLobby = $lobby;
-                    break;
-                }
-            }
-
-            if (!$currentLobby) {
-                return response()->json(['success' => false, 'error' => 'You are not in any lobby'], 404);
-            }
-
-            if (!$currentLobby->getLobbyState()) {
-                return response()->json(['success' => false, 'error' => 'Voting has not started yet'], 400);
-            }
-
-            $voteId = 'vote_' . $currentLobby->getId();
-            $vote = Cache::get($voteId);
-
-            if (!$vote) {
-                return response()->json(['success' => false, 'error' => 'No voting session found'], 404);
-            }
-
-            $allFavorites = $vote->getVotedGames();
-
-            return response()->json([
-                'success' => true,
-                'lobby_id' => $currentLobby->getId(),
-                'players_favorite_games' => $allFavorites,
-                'total_players' => count($currentLobby->getUsers())
-            ], 200);
-
-        } catch (\Exception $e) {
-            \Log::error('Error getting players favorite games: ' . $e->getMessage());
-            return response()->json(['success' => false, 'error' => 'Failed to get favorite games. Please try again.'], 500);
-        }
-    }
-
     public function getVote(Request $request): JsonResponse
     {
         try {
@@ -301,7 +255,7 @@ class VoteController extends Controller
         }
     }
 
-    public function getCurrentGame(Request $request): JsonResponse
+    public function getVoteGames(Request $request): JsonResponse
     {
         try {
             $user = $request->user();
@@ -327,23 +281,49 @@ class VoteController extends Controller
                 return response()->json(['success' => false, 'error' => 'Voting has not started yet'], 400);
             }
 
-            $voteId = 'vote_' . $currentLobby->getId();
-            $vote = Cache::get($voteId);
+            // $voteId = 'vote_' . $currentLobby->getId();
+            // try {
+            //     $vote = Cache::get($voteId);
+            // } catch (\Exception $e) {
+            //     $vote = new Vote($currentLobby, []);
+            //     Cache::put($voteId, $vote);
+            // }
 
-            if (!$vote) {
-                return response()->json(['success' => false, 'error' => 'No voting session found'], 404);
-            }
+            // $voteId = 'vote_' . $currentLobby->getId();
+            // try {
+            //     $vote = Cache::get($voteId);
+            // } catch (\Exception $e) {
+            //     $vote = new Vote($currentLobby, []);
+            //     Cache::put($voteId, $vote);
+            // }
 
-            $games = $vote->getGames();
-            $gameData = $games[$vote->getCurrentGame()];
+            $games = collect($currentLobby->getUsers())->map(function ($userId) {
+                $user = User::find($userId);
+                $userGames = $user->getFavoritedGames();
+
+                // Convert game IDs to Game models and get extra info
+                $gamesWithDetails = collect($userGames)->map(function ($gameData) {
+                    $game = new Game([
+                        'user_id' => $gameData->user_id,
+                        'game_id' => $gameData->game_id
+                    ]);
+                    $game->id = $gameData->id;
+                    $game->timestamps = false; // Prevent timestamp updates
+
+                    return [
+                        'id' => $gameData->id,
+                        'user_id' => $gameData->user_id,
+                        'game_id' => $gameData->game_id,
+                        'info' => $game->getInfo()
+                    ];
+                })->filter()->toArray();
+
+                return $gamesWithDetails;
+            })->flatten(1)->filter()->values()->toArray();
 
             return response()->json([
                 'success' => true,
-                'game_id' => $vote->getCurrentGame(),
-                'game_name' => $gameData['name'],
-                'total_votes' => $gameData['votes'],
-                'upvotes' => $gameData['upvotes'],
-                'downvotes' => $gameData['downvotes']
+                'games' => $games,
             ], 200);
 
         } catch (\Exception $e) {

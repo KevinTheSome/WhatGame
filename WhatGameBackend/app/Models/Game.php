@@ -16,6 +16,14 @@ class Game extends Model
         'game_id',
     ];
 
+    /**
+     * Get the user who favorited this game
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function getInfo()
     {
         try {
