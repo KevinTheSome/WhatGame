@@ -66,6 +66,13 @@ export default function Tab() {
         getLobbies();
     }, [searchQuery, filterValue]);
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            getLobbies();
+        }, 2000);
+        return () => clearInterval(interval);
+    }, [searchQuery, filterValue]);
+
     async function save(key: string, value: string) {
         await SecureStore.setItemAsync(key, value);
     }
@@ -153,13 +160,6 @@ export default function Tab() {
     }
 
     async function getLobbies() {
-        if (
-            searchQuery === "" ||
-            searchQuery === undefined ||
-            searchQuery === null ||
-            searchQuery === " "
-        )
-            return;
         try {
             const response = await fetch(
                 `${process.env.EXPO_PUBLIC_API_URL}/getLobbies`,

@@ -27,7 +27,6 @@ export default function GameCard(props: any) {
             const data = await response.json();
             if (data["error"] != null) {
                 setFavorites(favorites);
-                console.log(game.id);
             }
         } catch (error) {
             console.error(error);

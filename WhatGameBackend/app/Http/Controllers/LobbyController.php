@@ -207,8 +207,8 @@ class LobbyController extends Controller
             }
 
             $request->validate([
-                "search" => "sometimes|string|max:255",
-                "filter" => "required|string|in:all,friends",
+                "search" => "sometimes|max:255",
+                "filter" => "sometimes|string|in:all,friends",
             ]);
 
             $lobbies = Cache::get("lobbies", []);
@@ -220,33 +220,33 @@ class LobbyController extends Controller
                 ),
             );
 
-            // Apply search filter first
-            if ($request->has("search") && $request->input("search") != "") {
-                $searchTerm = strtolower($request->input("search"));
+            $searchTerm = trim($request->input("search", ""));
+            if (!empty($searchTerm)) {
                 $lobbies = collect($lobbies)->filter(function (
                     Lobby $lobby,
                 ) use ($searchTerm) {
-                    return stripos(strtolower($lobby->name), $searchTerm) !==
-                        false;
+                    return stripos(
+                        strtolower($lobby->name),
+                        strtolower($searchTerm),
+                    ) !== false;
                 });
+                $filterType = $request->input("filter", "all");
+                $visibleLobbies = collect($lobbies)->filter(function (
+                    Lobby $lobby,
+                ) use ($user, $friendIds, $filterType) {
+                    $creatorId = $lobby->getCreatorId();
+
+                    if ($filterType === "all") {
+                        return true;
+                    } elseif ($filterType === "friends") {
+                        return in_array($creatorId, $friendIds);
+                    }
+
+                    return false;
+                });
+            } else {
+                $visibleLobbies = collect($lobbies);
             }
-
-            $filterType = $request->input("filter", "all");
-            $visibleLobbies = collect($lobbies)->filter(function (
-                Lobby $lobby,
-            ) use ($user, $friendIds, $filterType) {
-                $creatorId = $lobby->getCreatorId();
-
-                if ($filterType === "all") {
-                    // Return all lobbies (both public and friends) regardless of creator
-                    return true;
-                } elseif ($filterType === "friends") {
-                    // Return only lobbies created by the user's friends
-                    return in_array($creatorId, $friendIds);
-                }
-
-                return false;
-            });
 
             $lobbyArray = $visibleLobbies->map(function (Lobby $lobby) {
                 $lobbyData = $lobby->toArray();
@@ -259,7 +259,7 @@ class LobbyController extends Controller
                 return $lobbyData;
             });
 
-            if ($filterType === "all") {
+            if (empty($searchTerm)) {
                 $lobbyArray = $lobbyArray->sortByDesc("user_count");
             }
 

@@ -36,16 +36,20 @@ export default function VotingView() {
     }, [navigation]);
 
     useEffect(() => {
-        const intervalId = setInterval(fetchLobbyInfo, 2000);
-
-        return () => clearInterval(intervalId);
+        getGamesToVoteOn();
     }, []);
 
     useEffect(() => {
         console.log("doneVoting changed:", doneVoting);
     }, [doneVoting]);
 
-    const fetchLobbyInfo = async () => {
+    useEffect(() => {
+        if (games && currentAnswerIndex >= games.length) {
+            setDoneVoting(true);
+        }
+    }, [currentAnswerIndex, games]);
+
+    const getGamesToVoteOn = async () => {
         try {
             const response = await fetch(
                 `${process.env.EXPO_PUBLIC_API_URL}/getVoteGames`,
@@ -73,7 +77,7 @@ export default function VotingView() {
     const sendVote = async (vote: "like" | "dislike") => {
         try {
             const response = await fetch(
-                `${process.env.EXPO_PUBLIC_API_URL}/vote`,
+                `${process.env.EXPO_PUBLIC_API_URL}/postVote`,
                 {
                     method: "POST",
                     headers: {
@@ -101,8 +105,7 @@ export default function VotingView() {
     };
 
     const handleVote = (vote: "like" | "dislike") => {
-        console.log(`Voted ${vote} on game:`, games?.[currentAnswerIndex]);
-        //sendVote(vote);
+        sendVote(vote);
         goToNextAnswer();
     };
 
@@ -111,7 +114,7 @@ export default function VotingView() {
     };
 
     const goToNextAnswer = () => {
-        if (games && currentAnswerIndex < games.length - 1) {
+        if (games && currentAnswerIndex < games.length) {
             const nextIndex = currentAnswerIndex + 1;
             // Update the current index first
             setCurrentAnswerIndex(nextIndex);
@@ -119,8 +122,10 @@ export default function VotingView() {
             // Then update the displayed cards to include the next one in the stack
             if (nextIndex + 1 < games.length) {
                 setDisplayedCards([nextIndex, nextIndex + 1]);
-            } else {
+            } else if (nextIndex < games.length) {
                 setDisplayedCards([nextIndex]);
+            } else {
+                setDisplayedCards([]);
             }
         }
     };
