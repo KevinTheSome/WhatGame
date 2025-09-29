@@ -82,24 +82,23 @@ class VoteController extends Controller
             }
 
             $validated = $request->validate([
-                'lobby_id' => 'required|string',
                 'game_id' => 'required|string',
                 'vote' => 'required|integer|in:1,-1', // 1 = upvote, -1 = downvote
             ]);
 
-            $lobbies = Cache::get('lobbies', []);
-            if (!isset($lobbies[$validated['lobby_id']])) {
-                return response()->json(['success' => false, 'error' => 'Lobby not found'], 404);
-            }
+            // $lobbies = Cache::get('lobbies', []);
+            // if (!isset($lobbies[$validated['lobby_id']])) {
+            //     return response()->json(['success' => false, 'error' => 'Lobby not found'], 404);
+            // }
 
-            $lobby = $lobbies[$validated['lobby_id']];
-            if (!in_array($user->id, $lobby->getUsers())) {
-                return response()->json(['success' => false, 'error' => 'You are not in this lobby'], 403);
-            }
+            // $lobby = $lobbies[$validated['lobby_id']];
+            // if (!in_array($user->id, $lobby->getUsers())) {
+            //     return response()->json(['success' => false, 'error' => 'You are not in this lobby'], 403);
+            // }
 
-            if (!$lobby->getLobbyState()) {
-                return response()->json(['success' => false, 'error' => 'Voting has not started yet'], 400);
-            }
+            // if (!$lobby->getLobbyState()) {
+            //     return response()->json(['success' => false, 'error' => 'Voting has not started yet'], 400);
+            // }
 
             $voteId = 'vote_' . $validated['lobby_id'];
             $vote = Cache::get($voteId);
