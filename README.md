@@ -1,3 +1,3 @@
 # WhatGame
 
-Can't dicide what to play WhatGame is the app for you.
+Can't decide what to play WhatGame is the app for you.
