@@ -40,7 +40,9 @@ export default function VotingView() {
     }, []);
 
     useEffect(() => {
-        console.log("doneVoting changed:", doneVoting);
+        if (doneVoting) {
+            router.push("/voteResults");
+        }
     }, [doneVoting]);
 
     useEffect(() => {
