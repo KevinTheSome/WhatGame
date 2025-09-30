@@ -286,23 +286,38 @@ class LobbyController extends Controller
     public function leaveLobby(Request $request): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                "lobby_id" => "required|string",
-            ]);
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(
+                    ["success" => false, "error" => "User not authenticated"],
+                    401,
+                );
+            }
 
             $lobbies = Cache::get("lobbies", []);
-            if (!isset($lobbies[$validated["lobby_id"]])) {
+            $userId = $user->id;
+
+            $lobby = null;
+            $lobbyId = null;
+            foreach ($lobbies as $id => $l) {
+                if (in_array($userId, $l->getUsers())) {
+                    $lobby = $l;
+                    $lobbyId = $id;
+                    break;
+                }
+            }
+
+            if (!$lobby) {
                 return response()->json(
-                    ["success" => false, "error" => "Lobby not found"],
+                    ["success" => false, "error" => "Not in any lobby"],
                     404,
                 );
             }
 
-            $lobby = $lobbies[$validated["lobby_id"]];
-            $lobby->removeUser($request->user()->id);
+            $lobby->removeUser($userId);
 
             if ($lobby->getUserCount() === 0) {
-                unset($lobbies[$validated["lobby_id"]]);
+                unset($lobbies[$lobbyId]);
                 Cache::put("lobbies", $lobbies);
                 return response()->json([
                     "success" => true,
@@ -312,7 +327,7 @@ class LobbyController extends Controller
                 ]);
             }
 
-            $lobbies[$validated["lobby_id"]] = $lobby;
+            $lobbies[$lobbyId] = $lobby;
             Cache::put("lobbies", $lobbies);
 
             return response()->json([
@@ -320,15 +335,6 @@ class LobbyController extends Controller
                 "lobby" => $lobby->toArray(),
                 "lobby_removed" => false,
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(
-                [
-                    "success" => false,
-                    "error" => "Validation error",
-                    "errorMessage" => $e->errors(),
-                ],
-                422,
-            );
         } catch (\Exception $e) {
             \Log::error("Error leaving lobby: " . $e->getMessage());
             return response()->json(

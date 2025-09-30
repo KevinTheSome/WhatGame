@@ -4,6 +4,7 @@ import { View, FlatList } from "react-native";
 import { useRouter, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Appbar, Button, List, useTheme } from "react-native-paper";
+import * as SecureStore from "expo-secure-store";
 
 const dummyGames: { id: string; name: string; votes: number }[] = [];
 export default function VoteResults() {
@@ -13,6 +14,31 @@ export default function VoteResults() {
     const [games, setGames] = useState(dummyGames);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const leaveVoting = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(
+                `${process.env.EXPO_PUBLIC_API_URL}/leaveLobby`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+                    },
+                },
+            );
+            const data = await response.json();
+            if (data["error"]) {
+                setError(data["error"]);
+            } else {
+                setLoading(false);
+                router.push("/vote");
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     useEffect(() => {
         navigation.setOptions({ headerShown: false });
@@ -62,7 +88,7 @@ export default function VoteResults() {
                 />
                 <Button
                     mode="contained"
-                    onPress={() => router.push("/")}
+                    onPress={leaveVoting}
                     style={{
                         backgroundColor: theme.colors.error,
                         marginRight: 8,
