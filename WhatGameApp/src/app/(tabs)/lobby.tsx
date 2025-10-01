@@ -1,6 +1,7 @@
 import { View, StyleSheet, FlatList, SafeAreaView } from "react-native";
 import { Text, Button, Avatar, Card, useTheme } from "react-native-paper";
 import { useEffect, useState } from "react";
+import { useLobby } from "@/hooks/useLobby";
 import { useRouter, useNavigation } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,8 +31,9 @@ export default function LobbyTab() {
     const [lobby, setLobby] = useState<Lobby | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [votingStarted, setVotingStarted] = useState<boolean | null>(null);
     const [userId, setUserId] = useState<number | null>(null);
+
+    const { players, status, setPlayers, setStatus } = useLobby();
 
     useEffect(() => {
         async function getUserId() {
@@ -68,7 +70,14 @@ export default function LobbyTab() {
             }
 
             setLobby(data.lobby);
-            setVotingStarted(data.lobby.state);
+            setPlayers(
+                data.lobby.users.map((u) => ({
+                    id: u.id,
+                    name: u.name,
+                    ready: false,
+                })),
+            );
+            setStatus(data.lobby.state ? "started" : "waiting");
             setError(null);
             setLoading(false);
         } catch (error) {
@@ -93,12 +102,11 @@ export default function LobbyTab() {
         navigation.setOptions({ headerShown: false });
     }, [navigation]);
 
-    // Voting strted redirect thingy
     useEffect(() => {
-        if (votingStarted === true) {
+        if (status === "started") {
             router.push("/voting");
         }
-    }, [votingStarted, router]);
+    }, [status, router]);
 
     const handleLeaveLobby = async () => {
         const response = await fetch(
@@ -198,14 +206,14 @@ export default function LobbyTab() {
 
             <View style={styles.playersContainer}>
                 <Text variant="titleMedium" style={styles.sectionTitle}>
-                    {lobby?.state ? "The game has started" : ""}
+                    {status === "started" ? "The game has started" : ""}
                 </Text>
                 <Text variant="titleMedium" style={styles.sectionTitle}>
-                    Players ({lobby?.users.length}/{lobby?.max_players})
+                    Players ({players.length}/{lobby?.max_players})
                 </Text>
 
                 <FlatList
-                    data={lobby.users}
+                    data={players}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <PlayerListItem
@@ -224,7 +232,7 @@ export default function LobbyTab() {
                     onPress={handleLeaveLobby}
                     style={[styles.button, styles.leaveButton]}
                     labelStyle={styles.buttonLabel}
-                    disabled={votingStarted}
+                    disabled={status === "started"}
                 >
                     Leave Lobby
                 </Button>
@@ -235,7 +243,7 @@ export default function LobbyTab() {
                         style={[styles.button, styles.startButton]}
                         labelStyle={styles.buttonLabel}
                         onPress={handleStartLobby}
-                        disabled={lobby.users.length < 2 || votingStarted}
+                        disabled={players.length < 2 || status === "started"}
                     >
                         Start Voting
                     </Button>

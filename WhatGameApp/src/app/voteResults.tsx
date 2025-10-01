@@ -33,7 +33,7 @@ export default function VoteResults() {
                 setError(data["error"]);
             } else {
                 setLoading(false);
-                router.push("/vote");
+                router.push("/");
             }
         } catch (error) {
             console.error(error);

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use PhpParser\Node\Stmt\TryCatch;
 
 class VoteController extends Controller
 {
@@ -248,6 +249,81 @@ class VoteController extends Controller
                 [
                     "success" => false,
                     "error" => "Failed to get vote results. Please try again.",
+                ],
+                500,
+            );
+        }
+    }
+
+    public function startVoting(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(
+                    ["success" => false, "error" => "User not authenticated"],
+                    401,
+                );
+            }
+
+            $lobby = $this->getCurrentLobby($user);
+
+            if (!$lobby) {
+                return response()->json(
+                    ["success" => false, "error" => "You are not in any lobby"],
+                    404,
+                );
+            }
+
+            if ($lobby->getLobbyState()) {
+                return response()->json(
+                    [
+                        "success" => false,
+                        "error" => "Voting has already started",
+                    ],
+                    400,
+                );
+            }
+
+            // if ($user->id !== $lobby->getCreatorId()) {
+            //     return response()->json(
+            //         [
+            //             "success" => false,
+            //             "error" => "Only the lobby creator can start voting",
+            //         ],
+            //         403,
+            //     );
+            // }
+
+            $lobby->startLobby($user);
+
+            // Update cache
+            $lobbies = Cache::get("lobbies", []);
+            $updatedLobbies = collect($lobbies)
+                ->map(function ($l) use ($lobby) {
+                    if ($l->getId() === $lobby->getId()) {
+                        return $lobby;
+                    }
+                    return $l;
+                })
+                ->values()
+                ->toArray();
+            Cache::put("lobbies", $updatedLobbies);
+
+            return response()->json(
+                [
+                    "success" => true,
+                    "message" => "Voting started successfully",
+                ],
+                200,
+            );
+        } catch (\Exception $e) {
+            \Log::error("Error starting voting: " . $e->getMessage());
+            return response()->json(
+                [
+                    "success" => false,
+                    "error" => "Failed to start voting. Please try again.",
+                    "errorMessages" => $e->getMessage(),
                 ],
                 500,
             );
