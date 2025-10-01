@@ -1,8 +1,8 @@
 import { View, StyleSheet, FlatList, SafeAreaView } from "react-native";
 import { Text, Button, Avatar, Card, useTheme } from "react-native-paper";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLobby } from "@/hooks/useLobby";
-import { useRouter, useNavigation } from "expo-router";
+import { useRouter, useNavigation, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ErrorSnackBar from "components/ErrorSnackBar";
@@ -88,15 +88,20 @@ export default function LobbyTab() {
         }
     };
 
-    useEffect(() => {
-        fetchLobbyInfo();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchLobbyInfo();
+            return;
+        }, []),
+    );
 
-    useEffect(() => {
-        const intervalId = setInterval(fetchLobbyInfo, 2000);
+    useFocusEffect(
+        useCallback(() => {
+            const intervalId = setInterval(fetchLobbyInfo, 2000);
 
-        return () => clearInterval(intervalId);
-    }, []);
+            return () => clearInterval(intervalId);
+        }, []),
+    );
 
     useEffect(() => {
         navigation.setOptions({ headerShown: false });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { View, StyleSheet, ScrollView, FlatList } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as SecureStore from "expo-secure-store";
@@ -17,12 +17,13 @@ import {
     Divider,
     IconButton,
 } from "react-native-paper";
-import { useNavigation, router } from "expo-router";
+import { useNavigation, router, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import LobbyCardItem from "components/LobbyCardItem";
 import EmptyConteiner from "components/EmptyConteiner";
 import ErrorSnackBar from "components/ErrorSnackBar";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 const SEGMENTED_BUTTONS = [
     {
@@ -58,9 +59,12 @@ export default function Tab() {
         navigation.setOptions({ headerShown: false });
     }, [navigation]);
 
-    useEffect(() => {
-        getLobbies();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            getLobbies();
+            return;
+        }, []),
+    );
 
     useEffect(() => {
         getLobbies();

@@ -6,9 +6,9 @@ import {
     ActivityIndicator,
 } from "react-native";
 import { Text, useTheme, IconButton } from "react-native-paper";
-import { useRouter, useNavigation } from "expo-router";
+import { useRouter, useNavigation, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
 import AnswerCard from "../../components/AnswerCard";
 
@@ -35,9 +35,12 @@ export default function VotingView() {
         navigation.setOptions({ headerShown: false });
     }, [navigation]);
 
-    useEffect(() => {
-        getGamesToVoteOn();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            getGamesToVoteOn();
+            return;
+        }, []),
+    );
 
     useEffect(() => {
         if (doneVoting) {

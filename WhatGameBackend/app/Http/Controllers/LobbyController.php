@@ -213,16 +213,21 @@ class LobbyController extends Controller
 
             $lobbies = Cache::get("lobbies", []);
             $userFriends = $user->getUsersFriends($user);
-            $friendIds = array_unique(
-                array_merge(
-                    array_column($userFriends, "sender_id"),
-                    array_column($userFriends, "receiver_id"),
-                ),
-            );
+            $friendIds = [];
+            foreach ($userFriends as $friendRelation) {
+                if ($friendRelation["sender_id"] == $user->id) {
+                    $friendIds[] = $friendRelation["receiver_id"];
+                } elseif ($friendRelation["receiver_id"] == $user->id) {
+                    $friendIds[] = $friendRelation["sender_id"];
+                }
+            }
+            $friendIds = array_unique($friendIds);
 
             $searchTerm = trim($request->input("search", ""));
+            $filterType = $request->input("filter", "all");
+            $tempLobbies = collect($lobbies);
             if (!empty($searchTerm)) {
-                $lobbies = collect($lobbies)->filter(function (
+                $tempLobbies = $tempLobbies->filter(function (
                     Lobby $lobby,
                 ) use ($searchTerm) {
                     return stripos(
@@ -230,23 +235,21 @@ class LobbyController extends Controller
                         strtolower($searchTerm),
                     ) !== false;
                 });
-                $filterType = $request->input("filter", "all");
-                $visibleLobbies = collect($lobbies)->filter(function (
-                    Lobby $lobby,
-                ) use ($user, $friendIds, $filterType) {
-                    $creatorId = $lobby->getCreatorId();
-
-                    if ($filterType === "all") {
-                        return true;
-                    } elseif ($filterType === "friends") {
-                        return in_array($creatorId, $friendIds);
-                    }
-
-                    return false;
-                });
-            } else {
-                $visibleLobbies = collect($lobbies);
             }
+            $visibleLobbies = $tempLobbies->filter(function (Lobby $lobby) use (
+                $friendIds,
+                $filterType,
+            ) {
+                $creatorId = $lobby->getCreatorId();
+
+                if ($filterType === "all") {
+                    return true;
+                } elseif ($filterType === "friends") {
+                    return in_array($creatorId, $friendIds);
+                }
+
+                return false;
+            });
 
             $lobbyArray = $visibleLobbies->map(function (Lobby $lobby) {
                 $lobbyData = $lobby->toArray();

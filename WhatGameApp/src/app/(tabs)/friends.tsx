@@ -231,6 +231,7 @@ export default function FriendsTab() {
             const data = await response.json();
             if (data["error"] != null) {
                 setError(data["error"]);
+                console.error(data["errorMessage"]);
                 setPeople([]);
             } else {
                 setPeople(data);
