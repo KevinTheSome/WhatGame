@@ -1,25 +1,25 @@
 {
-  "scheme": "acme",
-  "userInterfaceStyle": "automatic",
-  "orientation": "default",
-  "web": {
-    "output": "static"
-  },
-  "plugins": [
-    [
-      "expo-router",
-      {
-        "origin": "https://n"
-      }
+    "scheme": "acme",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "web": {
+        "output": "static"
+    },
+    "plugins": [
+        [
+            "expo-router",
+            {
+                "origin": "https://n"
+            }
+        ],
+        [
+            "expo-secure-store",
+            {
+                "configureAndroidBackup": true,
+                "faceIDPermission": "Allow $(PRODUCT_NAME) to access your Face ID biometric data."
+            }
+        ]
     ],
-    [
-      "expo-secure-store",
-      {
-        "configureAndroidBackup": true,
-        "faceIDPermission": "Allow $(PRODUCT_NAME) to access your Face ID biometric data."
-      }
-    ]
-  ],
-  "name": "WhatGameApp",
-  "slug": "WhatGameApp"
+    "name": "WhatGameApp",
+    "slug": "What-Game-App"
 }
