@@ -4,228 +4,265 @@ import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect, useRef } from "react";
 import {
-  Text,
-  Searchbar,
-  SegmentedButtons,
-  useTheme,
-  ActivityIndicator,
+    Text,
+    Searchbar,
+    SegmentedButtons,
+    useTheme,
+    ActivityIndicator,
 } from "react-native-paper";
 import GameCard from "components/GameCard";
 import { ScrollView } from "react-native-gesture-handler";
 import ErrorSnackBar from "components/ErrorSnackBar";
 
 export default function Tab() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState("browse");
-  const [results, setResults] = useState({ results: [] });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const theme = useTheme();
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filter, setFilter] = useState("browse");
+    const [results, setResults] = useState({ results: [] });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [allFavourites, setAllFavourites] = useState([]);
+    const theme = useTheme();
+    const insets = useSafeAreaInsets();
+    const navigation = useNavigation();
 
-  useEffect(() => {
-    navigation.setOptions({ headerShown: false });
-  }, [navigation]);
+    useEffect(() => {
+        navigation.setOptions({ headerShown: false });
+    }, [navigation]);
 
-  async function fetchGames() {
-    if (searchQuery.trim() === "") {
-      setResults({ results: [] });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        process.env.EXPO_PUBLIC_API_URL + "/search",
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
-          },
-          body: JSON.stringify({ search: searchQuery }),
+    async function fetchGames() {
+        if (searchQuery.trim() === "") {
+            setResults({ results: [] });
+            return;
         }
-      );
-      const data = await response.json();
-      if (data["error"] != null) {
-        setError(data["error"]);
-        setResults({ results: [] });
-      } else {
-        setResults(data);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred while fetching games';
-      setError(errorMessage);
-      console.error(errorMessage);
-      setResults({ results: [] });
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
-  async function fetchFavGames() {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        process.env.EXPO_PUBLIC_API_URL + "/getUserFavourites",
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
-          },
+        setIsLoading(true);
+        try {
+            const response = await fetch(
+                process.env.EXPO_PUBLIC_API_URL + "/search",
+                {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+                    },
+                    body: JSON.stringify({ search: searchQuery }),
+                },
+            );
+            const data = await response.json();
+            if (data["error"] != null) {
+                setError(data["error"]);
+                setResults({ results: [] });
+            } else {
+                setResults(data);
+            }
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "An error occurred while fetching games";
+            setError(errorMessage);
+            console.error(errorMessage);
+            setResults({ results: [] });
+        } finally {
+            setIsLoading(false);
         }
-      );
-      const data = await response.json();
-      if (data["error"] != null) {
-        setError(data["error"]);
-        setResults({ results: [] });
-      } else {
-        setResults({ results: data });
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred while fetching favorite games';
-      setError(errorMessage);
-      console.error(errorMessage);
-      setResults({ results: [] });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const timer = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (filter === "favourite") {
-      fetchFavGames();
-      return;
     }
 
-    if (timer.current) clearTimeout(timer.current);
-
-    if (searchQuery.trim() === "") {
-      setResults({ results: [] });
-      return;
+    async function fetchAllFavourites() {
+        setIsLoading(true);
+        try {
+            const response = await fetch(
+                process.env.EXPO_PUBLIC_API_URL + "/getUserFavourites",
+                {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+                    },
+                    body: JSON.stringify({ search: "" }),
+                },
+            );
+            const data = await response.json();
+            if (data["error"] != null) {
+                setError(data["error"]);
+                setAllFavourites([]);
+                setResults({ results: [] });
+            } else {
+                setAllFavourites(data);
+            }
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "An error occurred while fetching favourite games";
+            setError(errorMessage);
+            console.error(errorMessage);
+            setAllFavourites([]);
+            setResults({ results: [] });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
-    timer.current = window.setTimeout(() => {
-      fetchGames();
-    }, 500);
-
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
+    const filterFavourites = (query: string) => {
+        if (!allFavourites || allFavourites.length === 0) {
+            return [];
+        }
+        if (!query.trim()) {
+            return allFavourites;
+        }
+        const lowerQuery = query.toLowerCase();
+        return allFavourites.filter(
+            (game) => game.name && game.name.toLowerCase().includes(lowerQuery),
+        );
     };
-  }, [searchQuery, filter]);
 
-  function JsxGames() {
-    if (isLoading) {
-      return (
-        <View style={styles.centered}>
-          <Text>Loading...</Text>
-        </View>
-      );
+    const timer = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (filter !== "favourite") {
+            if (timer.current) {
+                clearTimeout(timer.current);
+            }
+
+            if (searchQuery.trim() === "") {
+                setResults({ results: [] });
+                return;
+            }
+
+            timer.current = setTimeout(() => {
+                fetchGames();
+            }, 500);
+
+            return () => {
+                if (timer.current) {
+                    clearTimeout(timer.current);
+                }
+            };
+        }
+    }, [searchQuery, filter]);
+
+    useEffect(() => {
+        if (filter === "favourite") {
+            if (allFavourites.length === 0) {
+                fetchAllFavourites();
+            } else {
+                const filtered = filterFavourites(searchQuery);
+                setResults({ results: filtered });
+                setIsLoading(false);
+            }
+        }
+    }, [filter, searchQuery, allFavourites]);
+
+    function JsxGames() {
+        if (!results?.results || results.results.length === 0) {
+            let message;
+            if (filter === "favourite") {
+                message =
+                    searchQuery.trim() === ""
+                        ? "No favourites found"
+                        : "No matching favourites found";
+            } else {
+                message =
+                    searchQuery.trim() === ""
+                        ? "Try searching for a game"
+                        : "No games found";
+            }
+            return (
+                <View style={styles.centered}>
+                    <Text>{message}</Text>
+                </View>
+            );
+        }
+
+        return results.results.map((game) => (
+            <GameCard game={game} key={game.id} />
+        ));
     }
 
-    if (!results?.results || results.results.length === 0) {
-      return (
-        <View style={styles.centered}>
-          <Text>
-            {filter === "favorite"
-              ? "No favorites found"
-              : searchQuery.trim()
-              ? "No games found"
-              : "Try searching for a game"}
-          </Text>
-        </View>
-      );
-    }
-
-    return results.results.map((game) => (
-      <GameCard game={game} key={game.id} />
-    ));
-  }
-
-  return (
-    <>
-      <ErrorSnackBar 
-        message={error || ''} 
-        type={error ? 'error' : 'info'}
-        onDismiss={() => setError(null)}
-      />
-      <ScrollView
-        style={[
-          styles.container,
-          { backgroundColor: theme.colors.background, paddingTop: insets.top },
-        ]}
-      >
-      <Text
-        variant="headlineLarge"
-        style={[styles.title, { color: theme.colors.onBackground }]}
-      >
-        Games
-      </Text>
-      <Searchbar
-        placeholder="Search for a game"
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-      />
-      <SegmentedButtons
-        value={filter}
-        onValueChange={setFilter}
-        style={{ marginVertical: 8 }}
-        buttons={[
-          {
-            value: "browse",
-            label: "Browse",
-            icon: "magnify",
-          },
-          {
-            value: "favourite",
-            label: "Favourite",
-            icon: "heart",
-          },
-        ]}
-      />
-      {/* <GameCard
+    return (
+        <>
+            <ErrorSnackBar
+                message={error || ""}
+                type={error ? "error" : "info"}
+                onDismiss={() => setError(null)}
+            />
+            <ScrollView
+                style={[
+                    styles.container,
+                    {
+                        backgroundColor: theme.colors.background,
+                        paddingTop: insets.top,
+                    },
+                ]}
+            >
+                <Text
+                    variant="headlineLarge"
+                    style={[styles.title, { color: theme.colors.onBackground }]}
+                >
+                    Games
+                </Text>
+                <Searchbar
+                    placeholder="Search for a game"
+                    onChangeText={setSearchQuery}
+                    value={searchQuery}
+                />
+                <SegmentedButtons
+                    value={filter}
+                    onValueChange={setFilter}
+                    style={{ marginVertical: 8 }}
+                    buttons={[
+                        {
+                            value: "browse",
+                            label: "Browse",
+                            icon: "magnify",
+                        },
+                        {
+                            value: "favourite",
+                            label: "Favourite",
+                            icon: "heart",
+                        },
+                    ]}
+                />
+                {/* <GameCard
         game={{
           name: "Monkey game",
           background_image:
             "https://as1.ftcdn.net/v2/jpg/00/51/55/32/1000_F_51553287_9jm0S2CV13BvIsqvqiJCaJAxpX4TzjGy.jpg",
         }}
       /> */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" />
-          </View>
-        ) : (
-          JsxGames()
-        )}
-      </ScrollView>
-    </>
-  );
+                {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" />
+                    </View>
+                ) : (
+                    JsxGames()
+                )}
+            </ScrollView>
+        </>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  title: {
-    fontWeight: "bold",
-    marginBottom: 16,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    title: {
+        fontWeight: "bold",
+        marginBottom: 16,
+    },
+    centered: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
 });

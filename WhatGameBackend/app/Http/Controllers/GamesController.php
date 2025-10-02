@@ -124,6 +124,18 @@ class gamesController extends Controller
                 }
             }
 
+            if ($request->filled("search")) {
+                $searchTerm = strtolower($request->search);
+                $favResponse = array_filter($favResponse, function ($game) use (
+                    $searchTerm,
+                ) {
+                    return stripos(
+                        strtolower($game["name"] ?? ""),
+                        $searchTerm,
+                    ) !== false;
+                });
+            }
+
             return response()->json($favResponse, 200);
         } catch (Throwable $th) {
             Log::error("Failed to get Favourited games", [
