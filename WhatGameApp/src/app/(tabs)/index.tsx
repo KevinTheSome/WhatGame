@@ -156,6 +156,7 @@ export default function Tab() {
             setIsEditModalVisible(false);
             setNewLobbyData({ name: "", max_players: 2, friendsOnly: false });
             getLobbies();
+            router.push("/(tabs)/lobby/");
         } catch (e: any) {
             setError(e.message);
         } finally {

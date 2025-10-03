@@ -114,22 +114,28 @@ export default function LobbyTab() {
     }, [status, router]);
 
     const handleLeaveLobby = async () => {
-        const response = await fetch(
-            `${process.env.EXPO_PUBLIC_API_URL}/leaveLobby`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+        try {
+            setLoading(true);
+            const response = await fetch(
+                `${process.env.EXPO_PUBLIC_API_URL}/leaveLobby`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+                    },
                 },
-                body: JSON.stringify({
-                    lobby_id: lobby.id,
-                }),
-            },
-        );
-        setLoading(true);
-        await SecureStore.deleteItemAsync("currentLobby");
-        router.back();
+            );
+            const data = await response.json();
+            if (data["error"]) {
+                setError(data["error"]);
+            } else {
+                setLoading(false);
+                router.push("/");
+            }
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const handleStartLobby = async () => {

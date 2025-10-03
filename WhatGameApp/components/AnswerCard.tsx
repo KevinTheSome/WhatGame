@@ -106,12 +106,14 @@ const AnswerCard = ({
             {...(isActive ? panResponder.panHandlers : {})}
         >
             <ImageBackground
-                source={{ uri: game.info.background_image }}
+                source={{ uri: game?.info?.background_image || "" }}
                 style={styles.backgroundImage}
                 blurRadius={3}
             >
                 <View style={styles.overlay}>
-                    <Text style={styles.gameName}>{game.info.name}</Text>
+                    <Text style={styles.gameName}>
+                        {game?.info?.name || "Unknown Game"}
+                    </Text>
                 </View>
             </ImageBackground>
 
