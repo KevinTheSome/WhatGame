@@ -164,18 +164,6 @@ export default function Tab() {
         }
     }, [filter, searchQuery, allFavourites]);
 
-    const getEmptyMessage = () => {
-        if (filter === "favourite") {
-            return searchQuery.trim() === ""
-                ? "No favourites found"
-                : "No matching favourites found";
-        } else {
-            return searchQuery.trim() === ""
-                ? "Try searching for a game"
-                : "No games found";
-        }
-    };
-
     return (
         <>
             <ErrorSnackBar
@@ -225,9 +213,38 @@ export default function Tab() {
                         <ActivityIndicator size="large" />
                     </View>
                 ) : (
-                    JsxGames()
+                    <FlatList
+                        data={results.results}
+                        renderItem={({ item }) => (
+                            <GameCard
+                                game={item}
+                                key={item.id}
+                                onFavorite={() => fetchAllFavourites()}
+                            />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                        ListEmptyComponent={() => {
+                            let message;
+                            if (filter === "favourite") {
+                                message =
+                                    searchQuery.trim() === ""
+                                        ? "No favourites found"
+                                        : "No matching favourites found";
+                            } else {
+                                message =
+                                    searchQuery.trim() === ""
+                                        ? "Try searching for a game"
+                                        : "No games found";
+                            }
+                            return (
+                                <View style={styles.centered}>
+                                    <Text>{message}</Text>
+                                </View>
+                            );
+                        }}
+                    />
                 )}
-            </ScrollView>
+            </View>
         </>
     );
 }
