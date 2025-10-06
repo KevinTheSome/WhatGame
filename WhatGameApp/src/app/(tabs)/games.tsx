@@ -1,8 +1,8 @@
-import { View, StyleSheet } from "react-native";
-import { useNavigation } from "expo-router";
+import { View, StyleSheet, FlatList } from "react-native";
+import { useNavigation, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
     Text,
     Searchbar,
@@ -16,7 +16,7 @@ import ErrorSnackBar from "components/ErrorSnackBar";
 
 export default function Tab() {
     const [searchQuery, setSearchQuery] = useState("");
-    const [filter, setFilter] = useState("browse");
+    const [filter, setFilter] = useState<string>("browse");
     const [results, setResults] = useState({ results: [] });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -28,6 +28,12 @@ export default function Tab() {
     useEffect(() => {
         navigation.setOptions({ headerShown: false });
     }, [navigation]);
+
+    useEffect(() => {
+        if (filter === "favourite") {
+            fetchAllFavourites();
+        }
+    }, [filter]);
 
     async function fetchGames() {
         if (searchQuery.trim() === "") {
@@ -90,7 +96,9 @@ export default function Tab() {
                 setAllFavourites([]);
                 setResults({ results: [] });
             } else {
-                setAllFavourites(data);
+                if (JSON.stringify(data) !== JSON.stringify(allFavourites)) {
+                    setAllFavourites(data);
+                }
             }
         } catch (error) {
             const errorMessage =
@@ -156,31 +164,17 @@ export default function Tab() {
         }
     }, [filter, searchQuery, allFavourites]);
 
-    function JsxGames() {
-        if (!results?.results || results.results.length === 0) {
-            let message;
-            if (filter === "favourite") {
-                message =
-                    searchQuery.trim() === ""
-                        ? "No favourites found"
-                        : "No matching favourites found";
-            } else {
-                message =
-                    searchQuery.trim() === ""
-                        ? "Try searching for a game"
-                        : "No games found";
-            }
-            return (
-                <View style={styles.centered}>
-                    <Text>{message}</Text>
-                </View>
-            );
+    const getEmptyMessage = () => {
+        if (filter === "favourite") {
+            return searchQuery.trim() === ""
+                ? "No favourites found"
+                : "No matching favourites found";
+        } else {
+            return searchQuery.trim() === ""
+                ? "Try searching for a game"
+                : "No games found";
         }
-
-        return results.results.map((game) => (
-            <GameCard game={game} key={game.id} />
-        ));
-    }
+    };
 
     return (
         <>
@@ -189,7 +183,7 @@ export default function Tab() {
                 type={error ? "error" : "info"}
                 onDismiss={() => setError(null)}
             />
-            <ScrollView
+            <View
                 style={[
                     styles.container,
                     {
@@ -226,13 +220,6 @@ export default function Tab() {
                         },
                     ]}
                 />
-                {/* <GameCard
-        game={{
-          name: "Monkey game",
-          background_image:
-            "https://as1.ftcdn.net/v2/jpg/00/51/55/32/1000_F_51553287_9jm0S2CV13BvIsqvqiJCaJAxpX4TzjGy.jpg",
-        }}
-      /> */}
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" />

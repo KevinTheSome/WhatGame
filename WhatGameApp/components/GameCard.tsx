@@ -29,6 +29,7 @@ export default function GameCard(props: any) {
             if (data["error"] != null) {
                 setFavorites(favorites);
             }
+            props.onFavorite();
         } catch (error) {
             console.error(error);
         }
@@ -39,31 +40,21 @@ export default function GameCard(props: any) {
                 <ImageBackground
                     source={{ uri: game.background_image }}
                     style={styles.imageBackground}
+                    resizeMode="cover"
                 >
                     <BlurView
-                        intensity={5}
+                        intensity={10}
                         tint="dark"
                         experimentalBlurMethod="dimezisBlurView"
                         style={styles.blurView}
                     >
                         <View style={styles.overlay}>
-                            <Text
-                                style={[
-                                    styles.title,
-                                    {
-                                        color: theme.colors.onPrimary,
-                                        textShadowColor:
-                                            theme.colors.onBackground,
-                                    },
-                                ]}
-                            >
-                                {game.name}
-                            </Text>
+                            <Text style={styles.title}>{game.name}</Text>
                             <View style={styles.iconContainer}>
                                 <IconButton
                                     icon={favorites ? "heart" : "heart-outline"}
                                     iconColor="red"
-                                    size={24}
+                                    size={28}
                                     onPress={handlefavorites}
                                 />
                             </View>
@@ -78,6 +69,8 @@ export default function GameCard(props: any) {
 const styles = StyleSheet.create({
     card: {
         marginVertical: 8,
+        borderRadius: 8,
+        padding: 0,
     },
     content: {
         height: 200,
@@ -98,9 +91,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: "bold",
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 1,
+        color: "white",
+        textShadowColor: "black",
+        textShadowOffset: { width: -1, height: 1 },
+        textShadowRadius: 2,
     },
 });
