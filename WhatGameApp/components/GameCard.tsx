@@ -1,6 +1,7 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ImageBackground } from "react-native";
+import { BlurView } from "expo-blur";
 import { useEffect, useState } from "react";
-import { Text, Card, Button, useTheme } from "react-native-paper";
+import { Text, Card, IconButton, useTheme } from "react-native-paper";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as SecureStore from "expo-secure-store";
 
@@ -33,20 +34,43 @@ export default function GameCard(props: any) {
         }
     }
     return (
-        <Card style={styles.card}>
-            <Card.Content>
-                <Text variant="titleLarge">{game.name}</Text>
+        <Card style={styles.card} onPress={handlefavorites}>
+            <Card.Content style={styles.content}>
+                <ImageBackground
+                    source={{ uri: game.background_image }}
+                    style={styles.imageBackground}
+                >
+                    <BlurView
+                        intensity={5}
+                        tint="dark"
+                        experimentalBlurMethod="dimezisBlurView"
+                        style={styles.blurView}
+                    >
+                        <View style={styles.overlay}>
+                            <Text
+                                style={[
+                                    styles.title,
+                                    {
+                                        color: theme.colors.onPrimary,
+                                        textShadowColor:
+                                            theme.colors.onBackground,
+                                    },
+                                ]}
+                            >
+                                {game.name}
+                            </Text>
+                            <View style={styles.iconContainer}>
+                                <IconButton
+                                    icon={favorites ? "heart" : "heart-outline"}
+                                    iconColor="red"
+                                    size={24}
+                                    onPress={handlefavorites}
+                                />
+                            </View>
+                        </View>
+                    </BlurView>
+                </ImageBackground>
             </Card.Content>
-            <Card.Cover source={{ uri: game.background_image }} />
-            <Card.Actions>
-                <Button onPress={handlefavorites}>
-                    {favorites ? (
-                        <Ionicons name="heart" size={24} color="red" />
-                    ) : (
-                        <Ionicons name="heart-outline" size={24} color="red" />
-                    )}
-                </Button>
-            </Card.Actions>
         </Card>
     );
 }
@@ -54,7 +78,29 @@ export default function GameCard(props: any) {
 const styles = StyleSheet.create({
     card: {
         marginVertical: 8,
-        padding: 2,
-        paddingVertical: 16,
+    },
+    content: {
+        height: 200,
+    },
+    imageBackground: {
+        flex: 1,
+    },
+    overlay: {
+        flex: 1,
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: 16,
+    },
+    iconContainer: {
+        alignSelf: "flex-end",
+    },
+    blurView: {
+        flex: 1,
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: "bold",
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 1,
     },
 });
