@@ -20,6 +20,25 @@
             }
         ]
     ],
-    "name": "WhatGameApp",
-    "slug": "What-Game-App"
+    "name": "WhatGame",
+    "slug": "What-Game",
+    "extra": {
+        "router": {
+            "origin": "https://n"
+        },
+        "eas": {
+            "projectId": "02da95b7-afc9-40b8-b56a-7a9614b14d5d"
+        }
+    },
+    "expo": {
+        "icon": "./assets/icon.png",
+        "android": {
+            "package": "com.kevinthesome.WhatGame"
+        },
+        "extra": {
+            "eas": {
+                "projectId": "ccb5fc14-e325-410e-ae00-165585850ea1"
+            }
+        }
+    }
 }

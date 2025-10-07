@@ -388,6 +388,7 @@ class VoteController extends Controller
                 })
                 ->flatten(1)
                 ->filter()
+                ->unique("game_id")
                 ->values()
                 ->toArray();
 

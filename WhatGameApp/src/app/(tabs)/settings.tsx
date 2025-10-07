@@ -1,5 +1,6 @@
-import { View, StyleSheet, Appearance, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { useState, useEffect, use } from "react";
+import { useThemeContext } from "../../contexts/ThemeContext";
 import {
     Button,
     Text,
@@ -33,6 +34,8 @@ export default function Tab() {
     const theme = useTheme();
     const navigation = useNavigation();
 
+    const { themePreference, setThemePreference } = useThemeContext();
+
     useEffect(() => {
         navigation.setOptions({ headerShown: false });
     }, [navigation]);
@@ -53,12 +56,6 @@ export default function Tab() {
     useEffect(() => {
         getUser();
     }, []);
-
-    function toggleTheme() {
-        Appearance.setColorScheme(
-            Appearance.getColorScheme() === "light" ? "dark" : "light",
-        );
-    }
 
     async function logout() {
         await SecureStore.deleteItemAsync("token");
@@ -237,7 +234,22 @@ export default function Tab() {
                     left={(props) => <Avatar.Icon {...props} icon="palette" />}
                 />
                 <Card.Content>
-                    <Button onPress={toggleTheme}>Toggle Theme</Button>
+                    <Text>
+                        Current:{" "}
+                        {themePreference === "system"
+                            ? "System Default"
+                            : themePreference.charAt(0).toUpperCase() +
+                              themePreference.slice(1)}
+                    </Text>
+                    <Button onPress={() => setThemePreference("system")}>
+                        Use System Default
+                    </Button>
+                    <Button onPress={() => setThemePreference("light")}>
+                        Light Theme
+                    </Button>
+                    <Button onPress={() => setThemePreference("dark")}>
+                        Dark Theme
+                    </Button>
                 </Card.Content>
             </Card>
 

@@ -243,9 +243,10 @@ class LobbyController extends Controller
                 $creatorId = $lobby->getCreatorId();
 
                 if ($filterType === "all") {
-                    return true;
+                    return !$lobby->getLobbyState();
                 } elseif ($filterType === "friends") {
-                    return in_array($creatorId, $friendIds);
+                    return in_array($creatorId, $friendIds) &&
+                        !$lobby->getLobbyState();
                 }
 
                 return false;

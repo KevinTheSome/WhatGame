@@ -11,7 +11,6 @@ import {
     ActivityIndicator,
 } from "react-native-paper";
 import GameCard from "components/GameCard";
-import { ScrollView } from "react-native-gesture-handler";
 import ErrorSnackBar from "components/ErrorSnackBar";
 
 export default function Tab() {

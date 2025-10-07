@@ -99,7 +99,6 @@ export default function VotingView() {
             if (data["error"]) {
                 setError(data["error"]);
             } else {
-                setGames(data["games"]);
                 setError(null);
                 setLoading(false);
             }

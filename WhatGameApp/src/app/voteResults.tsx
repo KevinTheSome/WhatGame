@@ -1,13 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
-import { ActivityIndicator, Text } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 import { View, FlatList } from "react-native";
 import { useRouter, useNavigation, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Appbar, Button, List, useTheme } from "react-native-paper";
+import { Text, useTheme } from "react-native-paper";
 import * as SecureStore from "expo-secure-store";
+import GameItem from "../../components/GameItem";
 
 interface Game {
     name: string;
+    background_image: string | null;
     votes: number;
     upvotes: number;
     downvotes: number;
@@ -35,6 +37,7 @@ interface GameResultsResponse {
 
 interface GameItem {
     id: string;
+    background_image: string | null;
     name: string;
     votes: number;
 }
@@ -96,6 +99,7 @@ export default function VoteResults() {
                         id,
                         name: game.name,
                         votes: game.votes,
+                        background_image: game.background_image,
                     }),
                 );
                 setGames(gameItems);
@@ -116,60 +120,17 @@ export default function VoteResults() {
         }, []),
     );
 
-    const renderGameItem = ({ item }: { item: GameItem }) => (
-        <List.Item
-            title={item.name}
-            titleStyle={{
-                fontSize: 18,
-                fontWeight: "600",
-                color: theme.colors.onSurface,
-            }}
-            description={`${item.votes} votes`}
-            descriptionStyle={{ fontSize: 16, color: theme.colors.primary }}
-            left={(props) => (
-                <List.Icon
-                    {...props}
-                    icon="vote"
-                    color={theme.colors.primary}
-                />
-            )}
-            style={{
-                margin: 8,
-                backgroundColor: theme.colors.surfaceVariant,
-                borderRadius: 8,
-            }}
-        />
-    );
-
     return (
         <SafeAreaView
             style={{ flex: 1, backgroundColor: theme.colors.background }}
         >
-            <Appbar.Header style={{ backgroundColor: theme.colors.primary }}>
-                <Appbar.Content
-                    title="Vote Results"
-                    titleStyle={{
-                        color: theme.colors.onPrimary,
-                        fontSize: 20,
-                        fontWeight: "bold",
-                    }}
-                />
-                <Button
-                    mode="contained"
-                    onPress={leaveVoting}
-                    style={{
-                        backgroundColor: theme.colors.error,
-                        marginRight: 8,
-                    }}
-                    contentStyle={{ paddingHorizontal: 16, paddingVertical: 4 }}
-                    labelStyle={{
-                        color: theme.colors.onError,
-                        fontWeight: "600",
-                    }}
-                >
-                    Leave
-                </Button>
-            </Appbar.Header>
+            <Text
+                variant="headlineLarge"
+                style={[styles.title, { color: theme.colors.onBackground }]}
+            >
+                Results
+            </Text>
+
             {loading ? (
                 <ActivityIndicator size="large" style={{ marginTop: 20 }} />
             ) : error ? (
@@ -179,7 +140,7 @@ export default function VoteResults() {
             ) : (
                 <FlatList
                     data={games}
-                    renderItem={renderGameItem}
+                    renderItem={({ item }) => <GameItem item={item} />}
                     keyExtractor={(item) => item.id}
                     style={{
                         flex: 1,
@@ -190,3 +151,25 @@ export default function VoteResults() {
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    title: {
+        fontWeight: "bold",
+        marginBottom: 16,
+    },
+    centered: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+});

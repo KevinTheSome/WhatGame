@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 
 export default function Page() {
-    const [isSignUp, setIsSignUp] = useState<boolean>(false);
+    const [isSignUp, setIsSignUp] = useState<boolean>(true);
     const [email, setEmail] = useState<string>("");
     const [name, setName] = useState<string>("");
     const [password, setPassword] = useState<string>("");

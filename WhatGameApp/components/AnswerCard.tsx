@@ -55,9 +55,11 @@ const AnswerCard = ({
         },
         onPanResponderRelease: (_, gestureState) => {
             if (Math.abs(gestureState.dx) > 50) {
+                const direction = gestureState.dx > 0 ? "like" : "dislike";
+                const targetX = gestureState.dx * 2;
                 Animated.parallel([
                     Animated.timing(pan, {
-                        toValue: { x: gestureState.dx * 2, y: 0 },
+                        toValue: { x: targetX, y: 0 },
                         duration: 200,
                         useNativeDriver: false,
                     }),
@@ -67,7 +69,7 @@ const AnswerCard = ({
                         useNativeDriver: false,
                     }),
                 ]).start(() => {
-                    onSwipe(gestureState.dx > 0 ? "like" : "dislike");
+                    onSwipe(direction);
                     onSwipeComplete();
                 });
             } else {
