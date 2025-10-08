@@ -1,8 +1,8 @@
 <?php
+use Illuminate\Support\Facades\Schedule;
+use App\Http\Controllers\VoteController;
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
-
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::call([VoteController::class, "deleateEmptyAndOldLobbys"])->twiceDaily(
+    1,
+    13,
+);

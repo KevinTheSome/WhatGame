@@ -61,20 +61,15 @@ export default function Tab() {
 
     useFocusEffect(
         useCallback(() => {
-            getLobbies();
-            return;
-        }, []),
+            const interval = setInterval(() => {
+                getLobbies();
+            }, 2000);
+            return () => clearInterval(interval);
+        }, [searchQuery, filterValue]),
     );
 
     useEffect(() => {
         getLobbies();
-    }, [searchQuery, filterValue]);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            getLobbies();
-        }, 2000);
-        return () => clearInterval(interval);
     }, [searchQuery, filterValue]);
 
     async function save(key: string, value: string) {
@@ -195,11 +190,12 @@ export default function Tab() {
                     ? error.message
                     : "An error occurred while fetching lobbies";
             setError(errorMessage);
-            console.error(errorMessage);
+            router.push("/noConnection");
         }
     }
 
     const timer = useRef<number | null>(null);
+
     useEffect(() => {
         if (timer.current) clearTimeout(timer.current);
 

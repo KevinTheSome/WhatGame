@@ -172,6 +172,29 @@ class VoteController extends Controller
         }
     }
 
+    public function deleateEmptyAndOldLobbys()
+    {
+        $lobbies = Cache::get("lobbies", []);
+
+        $thirtyMinutesAgo = now()->subMinutes(30);
+
+        $updatedLobbies = [];
+        $deletedCount = 0;
+
+        foreach ($lobbies as $id => $lobby) {
+            if (
+                $lobby->getUserCount() === 0 &&
+                $lobby->created_at < $thirtyMinutesAgo
+            ) {
+                $deletedCount++;
+            } else {
+                $updatedLobbies[$id] = $lobby;
+            }
+        }
+
+        Cache::put("lobbies", $updatedLobbies);
+    }
+
     public function voteResult(Request $request): JsonResponse
     {
         try {
