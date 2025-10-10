@@ -92,7 +92,7 @@ class VoteController extends Controller
             if (!$userLobby) {
                 return response()->json(
                     ["success" => false, "error" => "You are not in any lobby"],
-                    404,
+                    400,
                 );
             }
 
@@ -211,7 +211,7 @@ class VoteController extends Controller
             if (!$userLobby) {
                 return response()->json(
                     ["success" => false, "error" => "You are not in any lobby"],
-                    404,
+                    400,
                 );
             }
 
@@ -223,7 +223,7 @@ class VoteController extends Controller
                         "success" => false,
                         "error" => "Voting has not started yet",
                     ],
-                    400,
+                    401,
                 );
             }
 
@@ -233,7 +233,7 @@ class VoteController extends Controller
             if (!$vote) {
                 return response()->json(
                     ["success" => false, "error" => "No voting session found"],
-                    404,
+                    400,
                 );
             }
 
@@ -294,7 +294,7 @@ class VoteController extends Controller
             if (!$lobby) {
                 return response()->json(
                     ["success" => false, "error" => "You are not in any lobby"],
-                    404,
+                    400,
                 );
             }
 
@@ -307,16 +307,6 @@ class VoteController extends Controller
                     400,
                 );
             }
-
-            // if ($user->id !== $lobby->getCreatorId()) {
-            //     return response()->json(
-            //         [
-            //             "success" => false,
-            //             "error" => "Only the lobby creator can start voting",
-            //         ],
-            //         403,
-            //     );
-            // }
 
             $lobby->startLobby($user);
 
@@ -369,7 +359,7 @@ class VoteController extends Controller
             if (!$currentLobby) {
                 return response()->json(
                     ["success" => false, "error" => "You are not in any lobby"],
-                    404,
+                    400,
                 );
             }
 

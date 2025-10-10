@@ -43,7 +43,7 @@ export default function noConnection() {
             <View style={styles.iconContainer}>
                 <Ionicons name="wifi-outline" size={80} color="#666" />
                 <View style={styles.xOverlay}>
-                    <Ionicons name="close-outline" size={0} color="#f00" />
+                    <Ionicons name="close-outline" size={40} color="#f00" />
                 </View>
             </View>
             <Text style={styles.text}>Checking connection...</Text>
