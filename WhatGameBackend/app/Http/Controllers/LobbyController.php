@@ -26,6 +26,13 @@ class LobbyController extends Controller
 
     public function createLobby(Request $request): JsonResponse
     {
+        //validate request
+        $validated = $request->validate([
+            "name" => "required|string|max:50",
+            "filter" => "required|string|in:public,friends",
+            "max_players" => "required|integer|min:2|max:24",
+        ]);
+
         try {
             $user = $request->user();
             //auth check
@@ -48,13 +55,6 @@ class LobbyController extends Controller
                     );
                 }
             }
-
-            //validate request
-            $validated = $request->validate([
-                "name" => "required|string|max:50",
-                "filter" => "required|string|in:public,friends",
-                "max_players" => "required|integer|min:2|max:24",
-            ]);
 
             //check if lobby with same name exists
             $lobbies = Cache::get("lobbies", []);
@@ -117,6 +117,7 @@ class LobbyController extends Controller
 
     public function joinLobby(Request $request): JsonResponse
     {
+        $validated = $request->validate(["lobby_id" => "required|string"]);
         try {
             if (!$request->user()) {
                 return response()->json(
@@ -124,8 +125,6 @@ class LobbyController extends Controller
                     401,
                 );
             }
-
-            $validated = $request->validate(["lobby_id" => "required|string"]);
 
             $lobbies = Cache::get("lobbies", []);
             if (!isset($lobbies[$validated["lobby_id"]])) {
@@ -197,6 +196,10 @@ class LobbyController extends Controller
 
     public function getLobbies(Request $request): JsonResponse
     {
+        $request->validate([
+            "search" => "sometimes|max:255",
+            "filter" => "sometimes|string|in:all,friends",
+        ]);
         try {
             $user = $request->user();
             if (!$user) {
@@ -205,11 +208,6 @@ class LobbyController extends Controller
                     401,
                 );
             }
-
-            $request->validate([
-                "search" => "sometimes|max:255",
-                "filter" => "sometimes|string|in:all,friends",
-            ]);
 
             $lobbies = Cache::get("lobbies", []);
             $userFriends = $user->getUsersFriends($user);

@@ -12,10 +12,11 @@ class gamesController extends Controller
 {
     public function searchGame(Request $request)
     {
+        $request->validate([
+            "search" => "required|string",
+        ]);
+
         try {
-            $request->validate([
-                "search" => "required|string",
-            ]);
             $results = Http::get(
                 "https://api.rawg.io/api/games?key={key}&search={search}&page={page}&page_size=12",
                 [
@@ -54,11 +55,11 @@ class gamesController extends Controller
 
     public function addToFavourites(Request $request)
     {
-        try {
-            $request->validate([
-                "game_id" => "required|integer",
-            ]);
+        $request->validate([
+            "game_id" => "required|integer",
+        ]);
 
+        try {
             if (
                 Game::where("game_id", $request->game_id)
                     ->where("user_id", $request->user()->id)
@@ -95,11 +96,10 @@ class gamesController extends Controller
 
     public function getUserFavourites(Request $request)
     {
+        $request->validate([
+            "search" => "sometimes|max:255",
+        ]);
         try {
-            $request->validate([
-                "search" => "sometimes|max:255",
-            ]);
-
             $favResponse = [];
             if (!isset($request->user_id)) {
                 $favourites = Game::where(
@@ -154,11 +154,10 @@ class gamesController extends Controller
 
     public function delUserFavourit(Request $request)
     {
+        $request->validate([
+            "game_id" => "required",
+        ]);
         try {
-            $request->validate([
-                "game_id" => "required",
-            ]);
-
             Game::where("game_id", $request->game_id)->delete();
 
             return response()->json(

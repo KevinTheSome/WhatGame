@@ -14,11 +14,11 @@ class FriendController extends Controller
 {
     public function peopleSearch(Request $request)
     {
-        try {
-            $request->validate([
-                "search" => "sometimes|max:255",
-            ]);
+        $request->validate([
+            "search" => "sometimes|max:255",
+        ]);
 
+        try {
             $sent_requests = Friend::where("sender_id", $request->user()->id)
                 ->pluck("receiver_id")
                 ->toArray();
@@ -64,11 +64,11 @@ class FriendController extends Controller
 
     public function addFriend(Request $request)
     {
-        try {
-            $request->validate([
-                "friend_id" => "required|exists:users,id",
-            ]);
+        $request->validate([
+            "friend_id" => "required|exists:users,id",
+        ]);
 
+        try {
             if (
                 Friend::where("sender_id", $request->user()->id)
                     ->where("receiver_id", $request->friend_id)
@@ -109,17 +109,11 @@ class FriendController extends Controller
 
     public function acceptFriend(Request $request)
     {
-        try {
-            $request->validate([
-                "friend_id" => "required|exists:friends,id",
-            ]);
+        $request->validate([
+            "friend_id" => "required|exists:friends,id",
+        ]);
 
-            if (!Friend::where("id", $request->friend_id)->exists()) {
-                return response()->json(
-                    ["error" => "Friend request not found"],
-                    400,
-                );
-            }
+        try {
             $friendRecord = Friend::where("id", $request->friend_id)->first();
 
             if ($friendRecord->accepted) {
@@ -258,11 +252,11 @@ class FriendController extends Controller
 
     public function removeFriend(Request $request)
     {
-        try {
-            $request->validate([
-                "friend_id" => "required|exists:friends,id",
-            ]);
+        $request->validate([
+            "friend_id" => "required|exists:friends,id",
+        ]);
 
+        try {
             Friend::where("id", $request->friend_id)->delete();
 
             return response()->json(["success" => "Friend removed"], 200);
