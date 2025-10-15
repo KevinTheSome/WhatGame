@@ -79,11 +79,3 @@ WhatGame is a mobile app designed to help you and your friends decide what game 
 ### API Integration
 
 Update the frontend's API base URL in the Expo config to point to your Laravel backend (e.g., `http://localhost:8000` for local development).
-
-## Contributing
-
-Contributions are welcome! Please fork the repo and submit a pull request for any improvements or bug fixes.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
