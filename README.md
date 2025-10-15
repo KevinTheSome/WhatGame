@@ -1,4 +1,4 @@
-# WhatWame? the solution to a quest "what to game"?
+# WhatGame? the solution to a question "what to game"?
 
 <img src="/icon.png" alt="WhatGame? logo">
 
