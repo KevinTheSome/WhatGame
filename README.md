@@ -1,7 +1,4 @@
-<div align="center">
-  <img src="https://raw.githubusercontent.com/KevinTheSome/WhatGameApp/fc7837e3b139c4e01ab16e8608e76f134518a26f/assets/icon.png" alt="WhatGame Logo" width="200"/>
-  <h1>WhatGame</h1>
-</div>
+[WhatGame logo]([images/example.png](https://raw.githubusercontent.com/KevinTheSome/WhatGameApp/fc7837e3b139c4e01ab16e8608e76f134518a26f/assets/icon.png))
 
 WhatGame is a mobile app designed to help you and your friends decide what game to play next. No more endless debates—create lobbies with friends, discover exciting games, and vote to pick the perfect one!
 
