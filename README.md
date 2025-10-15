@@ -1,6 +1,6 @@
 # WhatWame? the solution to a quest "what to game"?
 
-<img src="https://raw.githubusercontent.com/KevinTheSome/WhatGameApp/fc7837e3b139c4e01ab16e8608e76f134518a26f/assets/icon.png" alt="WhatGame? logo" style="width: 400px; height: 400px;">
+<img src="https://raw.githubusercontent.com/KevinTheSome/WhatGameApp/fc7837e3b139c4e01ab16e8608e76f134518a26f/assets/icon.png" alt="WhatGame? logo">
 
 WhatGame is a mobile app designed to help you and your friends decide what game to play next. No more endless debates—create lobbies with friends, discover exciting games, and vote to pick the perfect one!
 
