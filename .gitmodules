@@ -1,6 +1,8 @@
 [submodule "WhatGameBackend"]
 	path = WhatGameBackend
 	url = https://github.com/KevinTheSome/WhatGameBackend.git
+	branch = main
 [submodule "WhatGameApp"]
 	path = WhatGameApp
 	url = https://github.com/KevinTheSome/WhatGameApp.git
+	branch = main
