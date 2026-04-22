@@ -19,8 +19,8 @@ WhatGame is a mobile app designed to help you and your friends decide what game 
 
 ### Prerequisites
 
-- Node.js (for frontend development)
-- PHP 8.1+ and Composer (for backend)
+- Node.js 24+ (for frontend development)
+- PHP 8.3+ and Composer (for backend)
 - Expo CLI: `npm install -g @expo/cli`
 - A database like MySQL or SQLite (configured in Laravel)
 
@@ -28,7 +28,7 @@ WhatGame is a mobile app designed to help you and your friends decide what game 
 
 1. Clone the repository:
    ```
-   git clone <your-repo-url>
+   git clone https://github.com/KevinTheSome/WhatGame.git
    cd WhatGame/frontend
    ```
 
@@ -36,10 +36,14 @@ WhatGame is a mobile app designed to help you and your friends decide what game 
    ```
    npm install
    ```
-
-3. Start the development server:
+3. Set up the environment file:
    ```
-   expo start
+   cp .env.example .env
+   ```
+
+4. Start the development server for expo go:
+   ```
+   npx expo start
    ```
 
 4. Open the app in Expo Go on your mobile device or use an emulator.
@@ -61,19 +65,24 @@ WhatGame is a mobile app designed to help you and your friends decide what game 
    cp .env.example .env
    ```
 
-4. Generate application key:
+4. Add the API key to the .env.
+   '''
+   RAWG_API_KEY=""
+   '''
+
+5. Generate application key:
    ```
    php artisan key:generate
    ```
 
-5. Configure your database in `.env` and run migrations:
+6. Configure your database in `.env` and run migrations:
    ```
    php artisan migrate
    ```
 
-6. Start the server:
+7. Start the server:
    ```
-   php artisan serve
+   php artisan serve --host0.0.0.0
    ```
 
 ### API Integration
